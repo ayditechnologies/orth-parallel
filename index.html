@@ -1,0 +1,3668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORTH Parallel, Find your field twin</title>
+<meta name="description" content="Every field on earth has a climate fingerprint. Parallel finds the field that matches yours." />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ORTH Parallel, Find your field twin" />
+<meta property="og:description" content="Every field on earth has a climate fingerprint. Parallel finds the field that matches yours." />
+<meta property="og:image" content="orth-parallel-thumb.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ORTH Parallel, Find your field twin" />
+<meta name="twitter:description" content="Every field on earth has a climate fingerprint. Parallel finds the field that matches yours." />
+<meta name="twitter:image" content="orth-parallel-thumb.jpg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@1,400&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/iconoir@7.10.0/css/iconoir.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+@font-face {
+  font-family: 'Cocogoose';
+  src: url('https://raw.githubusercontent.com/ayditechnologies/orth/ayditechnologies-orth-logo/Cocogoose-Pro-Semilight.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #000;
+  --bg-deep: #050505;
+  --bg-surface: #0a0a0a;
+  --white: #fff;
+  --font-display: 'Cocogoose', sans-serif;
+  --font-serif: 'Source Serif 4', serif;
+  --font-body: 'Nunito Sans', sans-serif;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+  --fg100: rgba(255,255,255,1.0);
+  --fg80: rgba(255,255,255,0.80);
+  --fg60: rgba(255,255,255,0.60);
+  --fg40: rgba(255,255,255,0.40);
+  --fg20: rgba(255,255,255,0.18);
+  --green: #7ec8a0;
+  --amber: #e8b84e;
+}
+
+em { font-style: normal; }
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  font-weight: 300;
+}
+
+/* ─── TYPE PAIRING ────────────────────────────────────────
+   Source Serif 4 has smaller x-height than Cocogoose, so it
+   visually reads smaller at the same font-size. We scale serif
+   em's up proportionally and align baselines to fix the pairing.
+─────────────────────────────────────────────────────────── */
+em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.12em;
+  letter-spacing: -0.01em;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+/* ─── NAV ─────────────────────────────────────────────────── */
+nav.top {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 500;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 32px;
+  height: 62px;
+  background: transparent;
+  transition: background 0.3s, backdrop-filter 0.3s;
+}
+nav.top.scrolled {
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.nav-logo-mark { width: 22px; height: 22px; }
+.nav-logo-text {
+  font-family: var(--font-display);
+  font-weight: 300;
+  color: var(--white);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.nav-logo-text .mark { color: var(--fg80); margin-left: 2px; }
+
+.nav-meta {
+  justify-self: center;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--fg60);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav-right {
+  justify-self: end;
+  display: flex;
+  gap: 8px;
+}
+.btn-nav {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg80);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-nav:hover { color: var(--white); border-color: var(--border-strong); background: rgba(255,255,255,0.04); }
+.btn-nav.primary {
+  background: var(--white);
+  color: var(--black);
+  border-color: var(--white);
+}
+.btn-nav.primary:hover { background: rgba(255,255,255,0.9); }
+
+/* ─── HERO ─────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+#sphere-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transition: opacity 0.5s ease;
+}
+body.map-stage-active #sphere-canvas,
+body.map-stage-active .hero-vignette {
+  opacity: 0;
+}
+body.map-stage-active .hero {
+  background: var(--black);
+}
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 90%);
+  pointer-events: none;
+}
+.hero-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  text-align: center;
+  padding: 0 32px;
+  max-width: 1200px;
+  width: 100%;
+  opacity: 1;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: auto;
+}
+.hero-content.hidden {
+  opacity: 0;
+  transform: translate(-50%, -60%);
+  pointer-events: none;
+}
+
+/* Map stage (lives inside hero, hidden until activated) */
+.hero-map {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+  z-index: 3;
+  padding: 0 32px;
+  width: 100%;
+  max-width: 1320px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+}
+.hero-map.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.hero-map-header {
+  text-align: center;
+  margin-bottom: 44px;
+}
+.hero-map-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(28px, 3.6vw, 44px);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin: 12px 0 8px;
+}
+.hero-map-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+.hero-map-sub {
+  font-size: 15px;
+  color: var(--fg60);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Stage 3: Result reveal on sphere */
+.hero-result {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+  z-index: 3;
+  text-align: center;
+  padding: 0 32px;
+  max-width: 1040px;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s;
+}
+.hero-result.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.hero-result-kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.hero-result-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(44px, 6.8vw, 88px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+.hero-result-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+.hero-result-sub {
+  font-size: 18px;
+  color: var(--fg80);
+  max-width: 640px;
+  margin: 0 auto 48px;
+  line-height: 1.5;
+}
+.hero-result-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--fg80);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  animation: bobDown 2.4s ease-in-out infinite;
+}
+.hero-result-indicator:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--white);
+  border-color: rgba(255,255,255,0.35);
+  animation-play-state: paused;
+}
+.hero-result-indicator i {
+  font-size: 16px;
+}
+@keyframes bobDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+.hero-kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+}
+.hero-kicker-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+h1.hero-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(38px, 5.2vw, 72px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 28px;
+  white-space: normal;
+}
+h1.hero-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+p.hero-sub {
+  font-size: 19px;
+  color: var(--fg80);
+  max-width: 620px;
+  margin: 0 auto 44px;
+  line-height: 1.55;
+  font-weight: 400;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 36px;
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.01em;
+}
+.hero-cta:hover {
+  background: rgba(255,255,255,0.92);
+}
+.hero-scroll {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  animation: floatDown 2.5s ease-in-out infinite;
+}
+@keyframes floatDown {
+  0%, 100% { transform: translate(-50%, 0); opacity: 0.4; }
+  50% { transform: translate(-50%, 8px); opacity: 1; }
+}
+
+/* ─── MAP CARD (used inside hero) ────────────────────────── */
+.map-card {
+  position: relative;
+  background: rgba(10, 10, 10, 0.35);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.55), 0 14px 40px rgba(0,0,0,0.4);
+}
+#leaflet-map {
+  height: 560px;
+  width: 100%;
+  background: rgba(15, 17, 21, 0.4);
+}
+.leaflet-container {
+  background: rgba(15, 17, 21, 0.5) !important;
+  font-family: var(--font-body) !important;
+}
+.leaflet-tile-pane {
+  opacity: 0.65;
+  filter: hue-rotate(-10deg) saturate(1.3) brightness(1.05) contrast(0.95);
+  mix-blend-mode: luminosity;
+}
+body.map-stage-active .leaflet-tile-pane {
+  opacity: 1;
+  filter: hue-rotate(-10deg) saturate(1.1) brightness(0.95) contrast(0.95);
+  mix-blend-mode: normal;
+}
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.45) !important;
+  color: var(--fg60) !important;
+  font-size: 10px !important;
+  font-family: var(--font-body) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: none !important;
+}
+.leaflet-control-attribution a { color: var(--fg80) !important; }
+
+/* Zoom controls — borderless pills, properly centered glyphs via flexbox */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px;
+}
+.leaflet-control-zoom a {
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--fg80) !important;
+  border: none !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  font-family: var(--font-body) !important;
+  font-size: 22px !important;
+  font-weight: 300 !important;
+  /* Flexbox centering guarantees the +/- glyph sits in the middle regardless of font */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  text-indent: 0 !important;
+  text-decoration: none !important;
+  transition: background 0.15s, color 0.15s;
+}
+.leaflet-control-zoom a:hover {
+  background: rgba(0,0,0,0.75) !important;
+  color: var(--white) !important;
+}
+/* Normalize the inner <span> that Leaflet injects */
+.leaflet-control-zoom a span {
+  display: block !important;
+  line-height: 1 !important;
+  font-size: inherit !important;
+  margin-top: -2px; /* optical adjustment so the glyph sits perfectly centered */
+}
+.leaflet-bottom.leaflet-right { bottom: 20px !important; right: 20px !important; }
+
+.map-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 400;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 20px;
+  max-width: 320px;
+  pointer-events: none;
+}
+.map-overlay-title {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.map-overlay-text {
+  font-size: 14px;
+  color: var(--fg80);
+  line-height: 1.45;
+}
+.map-overlay-coords {
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--white);
+  letter-spacing: 0.04em;
+}
+
+/* ─── MAP SEARCH FIELD ───────────────────────────── */
+.map-search {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 400;
+  width: 340px;
+  max-width: calc(100% - 40px);
+}
+.map-search-field {
+  position: relative;
+}
+.map-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  color: var(--fg80) !important;
+  font-size: 16px !important;
+  pointer-events: none;
+  z-index: 2;
+  line-height: 1;
+}
+.map-search input {
+  width: 100%;
+  height: 44px;
+  padding: 0 18px 0 44px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: none;
+  border-radius: 999px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  outline: none;
+  transition: background 0.15s;
+}
+.map-search input::placeholder {
+  color: var(--fg40);
+}
+.map-search input:focus {
+  background: rgba(0,0,0,0.7);
+}
+.map-search-results {
+  margin-top: 8px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+}
+.map-search-results.visible { display: block; }
+.map-search-result {
+  padding: 12px 18px;
+  font-size: 14px;
+  color: var(--fg80);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s, color 0.1s;
+  line-height: 1.4;
+}
+.map-search-result:last-child { border-bottom: none; }
+.map-search-result:hover,
+.map-search-result.active {
+  background: rgba(255,255,255,0.05);
+  color: var(--white);
+}
+.map-search-result-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--fg60);
+  margin-top: 2px;
+}
+.map-search-loading,
+.map-search-empty {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--fg60);
+}
+
+.map-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 72px;
+  position: relative;
+  z-index: 10;
+}
+.btn-ghost-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 36px;
+  background: transparent;
+  color: var(--fg80);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-ghost-back:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--white);
+}
+.btn-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 36px;
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.2s;
+  letter-spacing: 0.01em;
+}
+.btn-run:hover:not(:disabled) {
+  background: rgba(255,255,255,0.92);
+}
+.btn-run:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Custom Leaflet marker — simple solid dot */
+.custom-pin {
+  width: 16px;
+  height: 16px;
+  background: var(--white);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(255,255,255,0.5);
+  animation: pinDrop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pinDrop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── SEARCH OVERLAY ───────────────────────────────────── */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  display: none;
+  opacity: 0;
+  transition: opacity 0.6s ease, backdrop-filter 0.6s ease;
+}
+.search-overlay.visible {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+}
+.search-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 32px;
+  pointer-events: none;
+}
+.search-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  min-height: 16px;
+  transition: opacity 0.4s;
+}
+.search-status {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(28px, 4vw, 44px);
+  color: var(--white);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  min-height: 60px;
+  transition: opacity 0.4s;
+}
+.search-status em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+.search-progress {
+  margin-top: 40px;
+  width: 240px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-left: auto;
+  margin-right: auto;
+}
+.search-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--white);
+  transition: width 0.6s ease;
+}
+
+/* ─── RESULT VIEW ──────────────────────────────────────── */
+.result-view {
+  display: none;
+  min-height: 100vh;
+  padding: 120px 32px 80px;
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border);
+}
+.result-view.visible { display: block; }
+
+/* ─── ERROR VIEW ────────────────────────────────────────── */
+.error-view {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(24px) saturate(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+.error-view.visible { display: flex; }
+.error-wrap {
+  max-width: 560px;
+  text-align: center;
+}
+.error-icon {
+  font-size: 48px;
+  color: var(--fg80);
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: center;
+}
+.error-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(28px, 3.4vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+}
+.error-sub {
+  font-size: 16px;
+  color: var(--fg60);
+  line-height: 1.55;
+  margin-bottom: 36px;
+}
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.result-wrap { max-width: 1040px; margin: 0 auto; }
+
+.result-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.result-kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+h2.result-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+h2.result-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+.result-sub {
+  font-size: 17px;
+  color: var(--fg60);
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* Twin card */
+.twin-primary {
+  background: #1c2319;
+  border: none;
+  border-radius: 20px;
+  padding: 44px 48px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.twin-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--fg40);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.twin-name {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(32px, 4.5vw, 52px);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+.twin-region {
+  font-size: 16px;
+  color: var(--fg80);
+  margin-bottom: 28px;
+}
+.twin-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.twin-score-num {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 54px;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  line-height: 1;
+}
+.twin-score-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--fg60);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.twin-notes {
+  margin-top: 20px;
+  font-size: 15px;
+  color: var(--fg80);
+  line-height: 1.6;
+}
+
+/* Alt twins */
+.twin-alts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.twin-alt {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+}
+.twin-alt-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--fg40);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.twin-alt-name {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 24px;
+  margin-bottom: 6px;
+  letter-spacing: -0.005em;
+}
+.twin-alt-region {
+  font-size: 14px;
+  color: var(--fg60);
+  margin-bottom: 14px;
+}
+.twin-alt-score {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--fg80);
+  letter-spacing: 0.04em;
+}
+
+/* Findings */
+.findings-header {
+  margin: 160px 0 44px 0;
+}
+.findings-kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+h3.findings-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 32px;
+  letter-spacing: -0.01em;
+}
+h3.findings-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+.findings-list {
+  display: flex;
+  flex-direction: column;
+}
+.finding {
+  background: transparent;
+  padding: 28px 0;
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 20px;
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+}
+.finding:first-child { padding-top: 0; }
+.finding:last-child { border-bottom: none; padding-bottom: 0; }
+.finding-num {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--fg40);
+  letter-spacing: 0.1em;
+  padding-top: 2px;
+}
+.finding-text {
+  font-size: 16px;
+  color: var(--fg80);
+  line-height: 1.55;
+}
+.finding-text strong {
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* Share row */
+.share-row {
+  margin-top: 120px;
+  padding: 32px 0;
+  text-align: center;
+}
+.share-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 22px;
+  margin-bottom: 48px;
+  letter-spacing: -0.005em;
+}
+.share-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.btn-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 36px;
+  background: transparent;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, filter 0.15s;
+}
+.btn-share:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--white);
+}
+.btn-share.primary {
+  background: var(--white);
+  color: var(--black);
+  border-color: var(--white);
+}
+.btn-share.primary:hover { background: rgba(255,255,255,0.92); }
+.btn-share.sage {
+  background: #9ebb96;
+  color: var(--black);
+  border-color: #9ebb96;
+}
+.btn-share.sage:hover {
+  background: #aecaa6;
+  border-color: #aecaa6;
+}
+
+.disclaimer {
+  margin-top: 56px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0;
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  line-height: 1.7;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ─── SHARE CANVAS MODAL ───────────────────────────────── */
+.canvas-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(10,13,10,0.35);
+  backdrop-filter: blur(36px) saturate(1.2);
+  -webkit-backdrop-filter: blur(36px) saturate(1.2);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+}
+.canvas-modal.visible { display: flex; }
+.canvas-modal-inner {
+  max-width: 640px;
+  width: 100%;
+  text-align: center;
+}
+.canvas-modal-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.canvas-modal-sub {
+  font-size: 14px;
+  color: var(--fg60);
+  margin-bottom: 28px;
+}
+#share-canvas-preview {
+  width: 100%;
+  max-width: 540px;
+  height: auto;
+  display: block;
+  margin: 0 auto 48px;
+  border-radius: 16px;
+  background: #000;
+}
+.canvas-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 760px) {
+  nav.top { padding: 0 20px; }
+  .nav-meta { display: none; }
+  .hero { min-height: 100vh; }
+  h1.hero-title { font-size: 44px; }
+  p.hero-sub { font-size: 16px; }
+  .hero { min-height: 100vh; }
+  h1.hero-title { font-size: 44px; }
+  p.hero-sub { font-size: 16px; }
+  .hero-map { padding: 0 20px; }
+  #leaflet-map { height: 340px; }
+  /* Mobile: Awaiting pin overlay on top, search below it */
+  .map-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    bottom: auto;
+    max-width: none;
+  }
+  .map-search {
+    position: absolute;
+    top: 92px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+  .map-search input { height: 40px; font-size: 13px; }
+  .result-view { padding: 100px 20px 60px; }
+  .twin-primary { padding: 32px 24px; }
+  .twin-primary .twin-name { font-size: 32px; }
+  .twin-alts { grid-template-columns: 1fr; }
+  .finding { padding: 20px 0; grid-template-columns: 30px 1fr; }
+
+  /* Docs sections */
+  .docs-section { padding: 120px 20px 40px; }
+  .docs-intro, .docs-preamble, .doc-wrap { padding-left: 0; padding-right: 0; }
+  .docs-preamble { padding: 60px 20px 80px; }
+  section.doc { padding: 100px 20px; }
+  h2.docs-hero-title { font-size: 36px; }
+  h2.doc-section-heading { font-size: 28px; }
+  .docs-preamble p { font-size: 17px; }
+  .doc-section-intro { font-size: 16px; }
+  .pull { font-size: 17px; padding-left: 28px; margin: 32px 0; }
+  .cat-grid { grid-template-columns: 1fr; gap: 20px 0; }
+
+  /* Findings */
+  .findings-header { margin: 80px 0 32px 0; }
+  h3.findings-title { font-size: 26px; }
+
+  /* Share row */
+  .share-row { margin-top: 80px; }
+  .btn-share, .hero-cta, .btn-run, .btn-ghost-back {
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+  .share-actions { flex-direction: column; }
+  .share-actions .btn-share { width: 100%; justify-content: center; }
+
+  /* Share modal */
+  .canvas-modal { padding: 24px 16px; }
+  #share-canvas-preview { max-width: 100%; }
+
+  /* Result title */
+  h2.result-title { font-size: 32px; }
+}
+
+/* Narrow phones — final squeeze */
+@media (max-width: 480px) {
+  h1.hero-title { font-size: 36px; line-height: 1.08; }
+  p.hero-sub { font-size: 15px; }
+  .hero-cta, .btn-run { padding: 14px 24px; font-size: 14px; }
+  .nav-logo-text { font-size: 14px; letter-spacing: 0.16em; }
+  .btn-nav { padding: 8px 14px; font-size: 12px; }
+  h2.docs-hero-title { font-size: 30px; }
+  h2.doc-section-heading { font-size: 24px; }
+  .docs-section { padding: 100px 20px 40px; }
+  section.doc { padding: 80px 20px; }
+  .docs-preamble { padding: 48px 20px 60px; }
+  .findings-header { margin: 60px 0 28px 0; }
+  h3.findings-title { font-size: 22px; }
+  .twin-primary { padding: 24px 20px; }
+  .twin-primary .twin-name { font-size: 28px; }
+  .twin-alt { padding: 20px 22px; }
+  .finding-text { font-size: 15px; }
+}
+/* ─── DOCUMENTATION SECTIONS ──────────────────────────── */
+.docs-section {
+  padding: 200px 32px 60px;
+  background: var(--black);
+  border-top: 1px solid var(--border);
+}
+.docs-intro {
+  max-width: 1040px;
+  margin: 0 auto;
+  text-align: left;
+}
+.docs-kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+h2.docs-hero-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+h2.docs-hero-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+.docs-hero-sub {
+  font-size: 18px;
+  color: var(--fg80);
+  max-width: 720px;
+  line-height: 1.55;
+}
+
+.docs-preamble {
+  padding: 80px 32px 100px;
+  max-width: 1040px;
+  margin: 0 auto;
+  text-align: left;
+}
+.docs-preamble p {
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--fg80);
+  margin-bottom: 22px;
+}
+.docs-preamble p:last-child { margin-bottom: 0; }
+.docs-preamble em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--white);
+}
+.docs-preamble .dim { color: var(--fg60); }
+
+section.doc {
+  padding: 140px 32px;
+  border-bottom: 1px solid var(--border);
+}
+section.doc:last-of-type {
+  border-bottom: none;
+}
+.doc-wrap { max-width: 1040px; margin: 0 auto; }
+
+.doc-kicker {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--fg60);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.doc-kicker .num { color: var(--fg40); }
+
+h2.doc-section-heading {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(32px, 4.4vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin-bottom: 28px;
+  max-width: 860px;
+}
+h2.doc-section-heading em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+}
+
+.doc-section-intro {
+  font-size: 19px;
+  color: var(--fg80);
+  max-width: 760px;
+  line-height: 1.55;
+  margin-bottom: 48px;
+}
+
+.doc-blocks { display: flex; flex-direction: column; gap: 48px; }
+.doc-block {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.doc-block:first-child { border-top: none; padding-top: 0; }
+.doc-block-num {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--fg40);
+  letter-spacing: 0.1em;
+  padding-top: 4px;
+}
+.doc-block-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 22px;
+  color: var(--white);
+  margin-bottom: 12px;
+  letter-spacing: -0.005em;
+}
+.doc-block-body {
+  font-size: 16px;
+  color: var(--fg80);
+  line-height: 1.65;
+}
+.doc-block-body p { margin-bottom: 12px; }
+.doc-block-body p:last-child { margin-bottom: 0; }
+.doc-block-body em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--white);
+}
+.doc-block-body strong {
+  color: var(--white);
+  font-weight: 500;
+}
+
+ul.lean {
+  list-style: none;
+  margin: 16px 0 4px 0;
+  padding: 0;
+}
+ul.lean li {
+  font-size: 15px;
+  color: var(--fg80);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+}
+ul.lean li:last-child { border-bottom: none; }
+ul.lean .k { color: var(--fg60); font-family: var(--font-body); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0; }
+ul.lean .v { color: var(--white); text-align: right; }
+
+.pull {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--fg80);
+  max-width: 760px;
+  margin: 48px 0;
+  padding-left: 56px;
+  border-left: 1px solid var(--border);
+  letter-spacing: 0;
+}
+.pull em {
+  font-family: var(--font-body);
+  font-style: normal;
+  font-weight: 400;
+  color: var(--white);
+}
+
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px 48px;
+  margin-top: 32px;
+}
+.cat {
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+}
+.cat-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: var(--white);
+}
+.cat-desc {
+  font-size: 15px;
+  color: var(--fg80);
+  line-height: 1.6;
+}
+
+footer.docs-footer {
+  padding: 56px 32px;
+  text-align: center;
+}
+.foot-line {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--fg60);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  section.doc, .docs-section, .docs-preamble { padding-left: 20px; padding-right: 20px; }
+  .doc-block { grid-template-columns: 1fr; gap: 12px; }
+  .cat-grid { grid-template-columns: 1fr; gap: 0; }
+}
+
+
+/* ─── PAGE SWITCHING (single-file virtual pages) ─────────── */
+.page { display: block; }
+.page.hidden { display: none; }
+
+.doc-page-hero {
+  padding: 180px 32px 80px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.doc-page-hero-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+h1.doc-page-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(40px, 5.5vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+h1.doc-page-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg80);
+  font-size: 1.12em;
+  letter-spacing: -0.01em;
+}
+.doc-page-sub {
+  font-size: 20px;
+  color: var(--fg80);
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+.doc-page-sub em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--white);
+  font-size: 1.12em;
+}
+.doc-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--fg80);
+  text-decoration: none;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  margin-top: 36px;
+}
+.doc-back-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--white);
+  border-color: rgba(255,255,255,0.3);
+}
+
+/* Scope doc-page-hero for the embedded docs view */
+#page-docs .doc-page-hero { padding-top: 160px; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ NAV -->
+<nav class="top" id="nav">
+  <a class="nav-logo" href="#top" onclick="goHome(event)">
+    <span class="nav-logo-text">ORTH <span class="mark">PARALLEL</span></span>
+  </a>
+  <div class="nav-meta"></div>
+  <div class="nav-right">
+    <a href="#" class="btn-nav" onclick="showDocs(event)">
+      <i class="iconoir-page"></i> Documentation
+    </a>
+  </div>
+</nav>
+
+<div id="page-home" class="page">
+
+
+<!-- ═══════════════════════════════════════════ HERO + MAP (single section) -->
+<section class="hero" id="top">
+  <canvas id="sphere-canvas"></canvas>
+  <div class="hero-vignette"></div>
+
+  <!-- Stage 1: Landing content -->
+  <div class="hero-content" id="hero-content">
+    <h1 class="hero-title">Your field has a twin somewhere <em>on this planet.</em></h1>
+    <p class="hero-sub">Every field on earth has a climate fingerprint. Parallel finds the fields that match yours, anywhere in the world, and hands you ten things your land is quietly saying.</p>
+    <button class="hero-cta" onclick="showMapStage()">
+      <i class="iconoir-map-pin"></i>
+      Find your field twin
+    </button>
+  </div>
+
+  <!-- Stage 2: Map content (hidden initially) -->
+  <div class="hero-map" id="hero-map">
+    <div class="hero-map-header">
+      <h2 class="hero-map-title">Drop a pin to mark <em>your field.</em></h2>
+    </div>
+    <div class="map-card">
+      <div id="leaflet-map"></div>
+      <div class="map-overlay" id="map-overlay">
+        <div class="map-overlay-title">Awaiting pin</div>
+        <div class="map-overlay-text">Type a location or click anywhere on the map.</div>
+      </div>
+      <div class="map-search">
+        <div class="map-search-field">
+          <i class="iconoir-search map-search-icon"></i>
+          <input
+            type="text"
+            id="map-search-input"
+            placeholder="Type a place (Antequera, Napa Valley, Mendoza…)"
+            autocomplete="off"
+            onkeydown="handleSearchKey(event)"
+          />
+        </div>
+        <div class="map-search-results" id="map-search-results"></div>
+      </div>
+    </div>
+    <div class="map-actions">
+      <button class="btn-ghost-back" onclick="hideMapStage()">
+        <i class="iconoir-arrow-left"></i> Back
+      </button>
+      <button class="btn-run" id="run-btn" disabled onclick="runParallel()">
+        <i class="iconoir-sparks"></i>
+        Find my twin
+      </button>
+    </div>
+  </div>
+
+  <!-- Stage 3: Result reveal (on sphere) -->
+  <div class="hero-result" id="hero-result">
+    <div class="hero-result-kicker" id="hero-result-kicker">Your field twin</div>
+    <h2 class="hero-result-title" id="hero-result-title"></h2>
+    <p class="hero-result-sub" id="hero-result-sub"></p>
+    <a href="#result-view" class="hero-result-indicator" onclick="scrollToDetails(event)">
+      <span>See the findings</span>
+      <i class="iconoir-arrow-down"></i>
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ SEARCH OVERLAY -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-content">
+    <div class="search-label" id="search-label">Initializing</div>
+    <div class="search-status" id="search-status">Reading your field's signature.</div>
+    <div class="search-progress"><div class="search-progress-bar" id="search-progress-bar"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ RESULTS -->
+<div class="result-view" id="result-view">
+  <div class="result-wrap">
+    <div class="result-header">
+      <h2 class="result-title" id="result-title">Your field has <em>a twin</em></h2>
+      <p class="result-sub" id="result-sub">Here's the field on earth whose climate fingerprint most closely matches yours, and two runners-up worth knowing.</p>
+    </div>
+
+    <div class="twin-primary" id="twin-primary">
+      <div class="twin-label">Closest match</div>
+      <div class="twin-name" id="twin-name"></div>
+      <div class="twin-region" id="twin-region"></div>
+      <div class="twin-score-row">
+        <div class="twin-score-num" id="twin-score"></div>
+        <div class="twin-score-label">Similarity</div>
+      </div>
+      <div class="twin-notes" id="twin-notes"></div>
+    </div>
+
+    <div class="twin-alts" id="twin-alts"></div>
+
+    <div class="findings-header">
+      <h3 class="findings-title">What ORTH <em>sees in your coordinate.</em></h3>
+    </div>
+    <div class="findings-list" id="findings-list"></div>
+
+    <div class="share-row">
+      <div class="share-title">Share your field twin</div>
+      <div class="share-actions">
+        <a class="btn-share sage" href="https://orth.onelink.me/mfIw/k92a8wdr" target="_blank" rel="noopener">
+          <i class="iconoir-sparks"></i> Start using ORTH today
+        </a>
+        <button class="btn-share primary" onclick="openShareCanvas()">
+          <i class="iconoir-share-android"></i> Create share card
+        </button>
+        <button class="btn-share" onclick="runAgain()">
+          <i class="iconoir-refresh"></i> Try another field
+        </button>
+      </div>
+      <div class="disclaimer">
+        Generated from multiple climate datasets · ERA5 · NASA POWER · SoilGrids · MODIS<br>
+        For brand demonstration. Not an agronomic recommendation.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ ERROR VIEW -->
+<div class="error-view" id="error-view">
+  <div class="error-wrap">
+    <div class="error-icon"><i class="iconoir-warning-triangle"></i></div>
+    <h2 class="error-title" id="error-title">We couldn't run Parallel right now.</h2>
+    <p class="error-sub" id="error-sub">Please try again in a moment.</p>
+    <div class="error-actions">
+      <button class="btn-share primary" onclick="dismissError()">
+        <i class="iconoir-arrow-left"></i> Back to start
+      </button>
+      <button class="btn-share" onclick="retryRun()">
+        <i class="iconoir-refresh"></i> Try again
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════ SHARE CANVAS MODAL -->
+<div class="canvas-modal" id="canvas-modal">
+  <div class="canvas-modal-inner">
+    <canvas id="share-canvas-preview" width="1200" height="1600"></canvas>
+    <div class="canvas-modal-actions">
+      <button class="btn-share primary" onclick="downloadShareCard()">
+        <i class="iconoir-download"></i> Download PNG
+      </button>
+      <button class="btn-share" onclick="closeShareCanvas()">
+        <i class="iconoir-xmark"></i> Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ LIBRARIES -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   THREE.JS HERO SPHERE, reflective chrome orb
+═══════════════════════════════════════════════════════════ */
+let heroScene, heroCamera, heroRenderer, heroSphere, heroCubeCamera, heroCubeRenderTarget;
+let heroLandscape;
+
+function initHeroSphere() {
+  const canvas = document.getElementById('sphere-canvas');
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  heroScene = new THREE.Scene();
+  heroScene.background = new THREE.Color(0x000000);
+
+  heroCamera = new THREE.PerspectiveCamera(50, w / h, 0.1, 1000);
+  heroCamera.position.set(0, 0, 6);
+
+  heroRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  heroRenderer.setSize(w, h);
+  heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  heroRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+  heroRenderer.toneMappingExposure = 1.1;
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  heroScene.add(ambient);
+
+  // Cube camera — captures the rotating landscape around the sphere each frame
+  heroCubeRenderTarget = new THREE.WebGLCubeRenderTarget(512, {
+    format: THREE.RGBAFormat,
+    generateMipmaps: true,
+    minFilter: THREE.LinearMipmapLinearFilter,
+  });
+  heroCubeCamera = new THREE.CubeCamera(0.1, 100, heroCubeRenderTarget);
+  heroScene.add(heroCubeCamera);
+
+  // Build a realistic equirectangular landscape texture on canvas
+  // This gets wrapped on a large inverted sphere around the scene
+  // No external images, no CORS, no network dependency
+  const landscapeTexture = buildLandscapeTexture();
+
+  const landscapeGeom = new THREE.SphereGeometry(30, 96, 96);
+  landscapeGeom.scale(-1, 1, 1); // flip to render on the inside
+  const landscapeMat = new THREE.MeshBasicMaterial({
+    map: landscapeTexture,
+    side: THREE.FrontSide,
+  });
+  heroLandscape = new THREE.Mesh(landscapeGeom, landscapeMat);
+  heroScene.add(heroLandscape);
+
+  // Central mirror sphere — reflects the rotating landscape
+  const sphereGeom = new THREE.SphereGeometry(1.85, 96, 96);
+  const sphereMat = new THREE.MeshBasicMaterial({
+    envMap: heroCubeRenderTarget.texture,
+  });
+  heroSphere = new THREE.Mesh(sphereGeom, sphereMat);
+  heroScene.add(heroSphere);
+
+  window.addEventListener('resize', () => {
+    const nw = window.innerWidth, nh = window.innerHeight;
+    heroCamera.aspect = nw / nh;
+    heroCamera.updateProjectionMatrix();
+    heroRenderer.setSize(nw, nh);
+  });
+
+  animateHero();
+}
+
+// Landscape texture — loaded from GitHub raw (CORS-friendly)
+// Loaded directly as a THREE texture — no canvas middleman, no stretching,
+// no seam introduced by canvas conversion.
+const LANDSCAPE_URL = "https://raw.githubusercontent.com/ayditechnologies/orth/main/ardian-pranomo-qq8OIgiSeZE-unsplash.jpg";
+
+function buildLandscapeTexture() {
+  // Start with a placeholder canvas-backed texture; swap in the blended image once loaded
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = false;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+
+  // Load the image, then paint it onto the canvas with edges cross-faded
+  // into each other. This produces a seamless horizontal wrap regardless of
+  // whether the original image was shot as a true 360° panorama.
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // First draw the image stretched to fill the full 2:1 canvas
+    ctx.drawImage(img, 0, 0, W, H);
+
+    // Blend the last N pixels of the right edge into the first N pixels of the left
+    // by drawing a mirrored/faded strip. Width of the blend zone: 8% of total width.
+    const blendW = Math.round(W * 0.08);
+
+    // Grab the left-edge strip and right-edge strip as images
+    const leftStrip = ctx.getImageData(0, 0, blendW, H);
+    const rightStrip = ctx.getImageData(W - blendW, 0, blendW, H);
+
+    // Blend them: final right-edge pixel should equal final left-edge pixel
+    // We progressively fade the right strip toward the left's leftmost column
+    const blended = ctx.createImageData(blendW, H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < blendW; x++) {
+        const t = x / (blendW - 1); // 0 at left of strip, 1 at right
+        const iR = (y * blendW + x) * 4;
+        const iL = (y * blendW + x) * 4;
+        // Right strip pixel
+        const rR = rightStrip.data[iR];
+        const gR = rightStrip.data[iR + 1];
+        const bR = rightStrip.data[iR + 2];
+        // Left strip pixel (at the same relative x)
+        const rL = leftStrip.data[iL];
+        const gL = leftStrip.data[iL + 1];
+        const bL = leftStrip.data[iL + 2];
+        // As we move rightward in the strip, fade toward the left-edge pixel
+        blended.data[iR]     = rR * (1 - t) + rL * t;
+        blended.data[iR + 1] = gR * (1 - t) + gL * t;
+        blended.data[iR + 2] = bR * (1 - t) + bL * t;
+        blended.data[iR + 3] = 255;
+      }
+    }
+
+    // Paint the blended strip back onto the right edge of the canvas
+    ctx.putImageData(blended, W - blendW, 0);
+
+    texture.needsUpdate = true;
+  };
+  img.onerror = (err) => {
+    console.warn('Landscape image failed to load from GitHub', err);
+  };
+  img.src = LANDSCAPE_URL;
+
+  return texture;
+}
+
+function animateHero() {
+  requestAnimationFrame(animateHero);
+  const t = performance.now() * 0.001;
+
+  // Rotate the landscape slowly around the stationary sphere
+  if (heroLandscape) {
+    heroLandscape.rotation.y = t * 0.05;
+  }
+
+  // Update cube camera — sphere reflects current view of the rotating landscape
+  if (heroSphere) {
+    const wasVisible = heroSphere.userData.shouldBeVisible !== false;
+    heroSphere.visible = false;
+    heroCubeCamera.position.copy(heroSphere.position);
+    heroCubeCamera.update(heroRenderer, heroScene);
+    heroSphere.visible = wasVisible;
+
+    // Subtle sphere self-rotation (doesn't affect the reflection, just the sphere itself)
+    heroSphere.rotation.y = t * 0.05;
+  }
+
+  heroRenderer.render(heroScene, heroCamera);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LEAFLET MAP
+═══════════════════════════════════════════════════════════ */
+let leafletMap, currentMarker = null, currentCoords = null;
+
+function initMap() {
+  leafletMap = L.map('leaflet-map', {
+    center: [20, 0],
+    zoom: 2,
+    minZoom: 2,
+    maxZoom: 10,
+    worldCopyJump: true,
+    zoomControl: false,
+  });
+
+  L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+
+  // Dark Carto tiles (free, no API key)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png', {
+    attribution: '© OpenStreetMap · © CARTO',
+    maxZoom: 18,
+  }).addTo(leafletMap);
+
+  leafletMap.on('click', (e) => {
+    const { lat, lng } = e.latlng;
+    setPin(lat, lng);
+  });
+}
+
+function setPin(lat, lng) {
+  if (currentMarker) leafletMap.removeLayer(currentMarker);
+  const icon = L.divIcon({
+    className: 'custom-pin-wrap',
+    html: '<div class="custom-pin"></div>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+  currentMarker = L.marker([lat, lng], { icon }).addTo(leafletMap);
+  currentCoords = { lat, lng };
+  updateOverlay(lat, lng);
+  document.getElementById('run-btn').disabled = false;
+}
+
+function updateOverlay(lat, lng) {
+  const overlay = document.getElementById('map-overlay');
+  overlay.innerHTML = `
+    <div class="map-overlay-title">Field location</div>
+    <div class="map-overlay-text">Ready to find the twin of this coordinate.</div>
+    <div class="map-overlay-coords">${lat.toFixed(4)}°, ${lng.toFixed(4)}°</div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GEOCODING, Nominatim (OpenStreetMap's free geocoder)
+═══════════════════════════════════════════════════════════ */
+let searchDebounceTimer = null;
+let searchActiveIndex = -1;
+let searchResults = [];
+
+function handleSearchKey(e) {
+  const input = e.target;
+  const resultsEl = document.getElementById('map-search-results');
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (searchActiveIndex >= 0 && searchResults[searchActiveIndex]) {
+      chooseSearchResult(searchActiveIndex);
+    } else if (input.value.trim().length > 1) {
+      // Fire immediate search if user hits enter without picking
+      performGeocode(input.value.trim(), true);
+    }
+    return;
+  }
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (searchResults.length === 0) return;
+    searchActiveIndex = Math.min(searchActiveIndex + 1, searchResults.length - 1);
+    updateSearchHighlight();
+    return;
+  }
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    searchActiveIndex = Math.max(searchActiveIndex - 1, -1);
+    updateSearchHighlight();
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    resultsEl.classList.remove('visible');
+    searchActiveIndex = -1;
+    return;
+  }
+
+  // Debounced search as user types
+  clearTimeout(searchDebounceTimer);
+  const query = input.value.trim();
+  if (query.length < 2) {
+    resultsEl.classList.remove('visible');
+    resultsEl.innerHTML = '';
+    searchResults = [];
+    searchActiveIndex = -1;
+    return;
+  }
+  searchDebounceTimer = setTimeout(() => performGeocode(query, false), 350);
+}
+
+async function performGeocode(query, autoSelect) {
+  const resultsEl = document.getElementById('map-search-results');
+  resultsEl.innerHTML = '<div class="map-search-loading">Searching…</div>';
+  resultsEl.classList.add('visible');
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Geocode failed');
+    const data = await res.json();
+    searchResults = data;
+    searchActiveIndex = -1;
+
+    if (data.length === 0) {
+      resultsEl.innerHTML = '<div class="map-search-empty">No places matched that query.</div>';
+      return;
+    }
+
+    // If user hit enter and hasn't picked, take first result
+    if (autoSelect && data.length > 0) {
+      resultsEl.classList.remove('visible');
+      chooseSearchResult(0);
+      return;
+    }
+
+    resultsEl.innerHTML = data.map((r, i) => {
+      const primary = r.display_name.split(',')[0];
+      const rest = r.display_name.split(',').slice(1, 3).join(',').trim();
+      return `
+        <div class="map-search-result" data-idx="${i}" onclick="chooseSearchResult(${i})">
+          ${primary}
+          ${rest ? `<span class="map-search-result-sub">${rest}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    resultsEl.innerHTML = '<div class="map-search-empty">Couldn\'t reach geocoder. Try again.</div>';
+  }
+}
+
+function updateSearchHighlight() {
+  const items = document.querySelectorAll('.map-search-result');
+  items.forEach((el, i) => {
+    el.classList.toggle('active', i === searchActiveIndex);
+  });
+}
+
+function chooseSearchResult(i) {
+  const r = searchResults[i];
+  if (!r) return;
+  const lat = parseFloat(r.lat);
+  const lng = parseFloat(r.lon);
+  leafletMap.flyTo([lat, lng], 10, { duration: 1.2 });
+  setPin(lat, lng);
+  document.getElementById('map-search-input').value = r.display_name.split(',')[0];
+  document.getElementById('map-search-results').classList.remove('visible');
+}
+
+// Close results dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.map-search');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('map-search-results')?.classList.remove('visible');
+  }
+});
+
+function showMapStage() {
+  document.getElementById('hero-content').classList.add('hidden');
+  document.getElementById('hero-map').classList.add('visible');
+  document.body.classList.add('map-stage-active');
+  // Hide the chrome sphere, keep the rotating landscape
+  if (heroSphere) heroSphere.userData.shouldBeVisible = false;
+  // Leaflet needs a size recalculation once its container becomes visible
+  setTimeout(() => {
+    if (leafletMap) leafletMap.invalidateSize();
+  }, 550);
+}
+
+function hideMapStage() {
+  document.getElementById('hero-map').classList.remove('visible');
+  document.body.classList.remove('map-stage-active');
+
+  // Clear any pin that was dropped
+  if (currentMarker) {
+    leafletMap.removeLayer(currentMarker);
+    currentMarker = null;
+  }
+  currentCoords = null;
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('map-overlay').innerHTML = `
+    <div class="map-overlay-title">Awaiting pin</div>
+    <div class="map-overlay-text">Click anywhere on the map to mark your field's location.</div>
+  `;
+
+  // If the user was exploring another field from their existing results,
+  // restore the result view instead of going back home.
+  if (window.__cameFromResults && window.__previousResult) {
+    window.__cameFromResults = false;
+    currentResult = window.__previousResult;
+    window.__previousResult = null;
+    document.getElementById('hero-result').classList.add('visible');
+    document.getElementById('result-view').classList.add('visible');
+    // Sphere stays hidden (it was hidden during results too)
+    if (heroSphere) heroSphere.userData.shouldBeVisible = false;
+    return;
+  }
+
+  // Otherwise, default: back to home
+  document.getElementById('hero-content').classList.remove('hidden');
+  if (heroSphere) heroSphere.userData.shouldBeVisible = true;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SEARCH OVERLAY, transparent blur, hero sphere + landscape
+   remain visible beneath. No separate Three.js scene.
+═══════════════════════════════════════════════════════════ */
+
+function showSearchOverlay() {
+  document.getElementById('search-overlay').classList.add('visible');
+}
+
+function hideSearchOverlay() {
+  document.getElementById('search-overlay').classList.remove('visible');
+}
+
+function setSearchStage(label, status, progress) {
+  document.getElementById('search-label').textContent = label;
+  document.getElementById('search-status').innerHTML = status;
+  document.getElementById('search-progress-bar').style.width = progress + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIMULATED TWIN SEARCH (placeholder, real engine gets wired later)
+═══════════════════════════════════════════════════════════ */
+
+// Small demonstration pool — real version will use the 300-entry POOL from parallel_engine_v4
+const DEMO_POOL = [
+  { name: "Ronda, Málaga", region: "Andalusia", lat: 36.74, lon: -5.17, t_ann: 15.5, precip: 690, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "serrano viticulture, olive" },
+  { name: "Jerez de la Frontera", region: "Andalusia", lat: 36.69, lon: -6.14, t_ann: 18.3, precip: 565, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "sherry viticulture, Palomino" },
+  { name: "Antequera, Málaga", region: "Andalusia", lat: 37.02, lon: -4.56, t_ann: 16.8, precip: 500, climate: "hot-summer Mediterranean", crops: ["olive"], signature: "olive", identity: "Hojiblanca olive heartland" },
+  { name: "Montoro, Córdoba", region: "Andalusia", lat: 38.02, lon: -4.38, t_ann: 17.5, precip: 560, climate: "hot-summer Mediterranean", crops: ["olive"], signature: "olive", identity: "one of the heartlands of Picual olive oil" },
+  { name: "Jaén (Sierra Sur)", region: "Andalusia", lat: 37.77, lon: -3.79, t_ann: 17.0, precip: 540, climate: "hot-summer Mediterranean", crops: ["olive"], signature: "olive", identity: "Picual olive, world largest producer" },
+  { name: "Baeza, Jaén", region: "Andalusia", lat: 37.99, lon: -3.47, t_ann: 16.0, precip: 520, climate: "hot-summer Mediterranean", crops: ["olive"], signature: "olive", identity: "premium Picual olive oil" },
+  { name: "Priego de Córdoba", region: "Andalusia", lat: 37.44, lon: -4.19, t_ann: 16.2, precip: 620, climate: "hot-summer Mediterranean", crops: ["olive"], signature: "olive", identity: "a Protected Designation of Origin for premium olive oil" },
+  { name: "Córdoba (capital)", region: "Andalusia", lat: 37.89, lon: -4.78, t_ann: 17.7, precip: 550, climate: "hot-summer Mediterranean", crops: ["olive", "wine grape", "stone fruit"], signature: "olive", identity: "olive, vineyard, stone fruit" },
+  { name: "Montilla-Moriles", region: "Andalusia", lat: 37.59, lon: -4.64, t_ann: 16.8, precip: 580, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "Pedro Ximénez viticulture, olive" },
+  { name: "Écija, Sevilla", region: "Andalusia", lat: 37.54, lon: -5.08, t_ann: 17.5, precip: 530, climate: "hot-summer Mediterranean", crops: ["olive", "stone fruit"], signature: "olive", identity: "olive, cotton, stone fruit" },
+  { name: "Huelva (Condado)", region: "Andalusia", lat: 37.26, lon: -6.95, t_ann: 17.8, precip: 520, climate: "hot-summer Mediterranean", crops: ["citrus", "blueberry"], signature: "citrus", identity: "strawberry, citrus, blueberry" },
+  { name: "Murcia (Vega Alta)", region: "Murcia", lat: 38.06, lon: -1.2, t_ann: 17.5, precip: 300, climate: "cold semi-arid", crops: ["citrus", "stone fruit", "almond"], signature: "almond", identity: "citrus, stone fruit, almond" },
+  { name: "Cieza, Murcia", region: "Murcia", lat: 38.24, lon: -1.42, t_ann: 17.0, precip: 290, climate: "cold semi-arid", crops: ["stone fruit"], signature: "stone fruit", identity: "stone fruit (peach, apricot)" },
+  { name: "Valencia (Huerta)", region: "Valencia", lat: 39.47, lon: -0.38, t_ann: 18.0, precip: 450, climate: "hot-summer Mediterranean", crops: ["citrus"], signature: "citrus", identity: "Valencia orange, Navel, clementine" },
+  { name: "Alcoy, Alicante", region: "Valencia", lat: 38.7, lon: -0.47, t_ann: 16.0, precip: 500, climate: "hot-summer Mediterranean", crops: ["almond", "stone fruit"], signature: "almond", identity: "almond, stone fruit" },
+  { name: "Utiel-Requena", region: "Valencia", lat: 39.49, lon: -1.1, t_ann: 13.5, precip: 430, climate: "cold semi-arid", crops: ["wine grape"], signature: "citrus", identity: "Bobal viticulture" },
+  { name: "Rioja Alta (Haro)", region: "La Rioja", lat: 42.58, lon: -2.85, t_ann: 13.2, precip: 500, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Tempranillo viticulture" },
+  { name: "Rioja Baja (Alfaro)", region: "La Rioja", lat: 42.18, lon: -1.75, t_ann: 14.5, precip: 380, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "Grenache, Tempranillo" },
+  { name: "Ribera del Duero", region: "Castilla y León", lat: 41.5, lon: -3.78, t_ann: 11.8, precip: 460, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "Tempranillo, continental viticulture" },
+  { name: "Toro", region: "Castilla y León", lat: 41.52, lon: -5.4, t_ann: 12.5, precip: 380, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "Tempranillo (Tinta de Toro)" },
+  { name: "Rueda", region: "Castilla y León", lat: 41.42, lon: -4.97, t_ann: 12.0, precip: 420, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "Verdejo white viticulture" },
+  { name: "Penedès", region: "Catalonia", lat: 41.35, lon: 1.7, t_ann: 15.0, precip: 570, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Cava viticulture" },
+  { name: "Priorat", region: "Catalonia", lat: 41.23, lon: 0.72, t_ann: 14.5, precip: 500, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Garnacha, Cariñena viticulture" },
+  { name: "Lleida (Segrià)", region: "Catalonia", lat: 41.62, lon: 0.63, t_ann: 14.5, precip: 350, climate: "cold semi-arid", crops: ["stone fruit", "pear", "apple"], signature: "apple", identity: "stone fruit, pear, apple" },
+  { name: "Mallorca (Binissalem)", region: "Balearics", lat: 39.68, lon: 2.84, t_ann: 16.5, precip: 550, climate: "hot-summer Mediterranean", crops: ["wine grape", "almond"], signature: "almond", identity: "Manto Negro viticulture, almond" },
+  { name: "Alentejo (Évora)", region: "Alentejo", lat: 38.52, lon: -7.91, t_ann: 16.5, precip: 600, climate: "hot-summer Mediterranean", crops: ["olive", "wine grape"], signature: "olive", identity: "olive, cork, vineyard" },
+  { name: "Alentejo (Borba)", region: "Alentejo", lat: 38.81, lon: -7.46, t_ann: 16.8, precip: 560, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "Aragonez viticulture, olive" },
+  { name: "Douro (Pinhão)", region: "Douro", lat: 41.19, lon: -7.55, t_ann: 15.5, precip: 650, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Port wine viticulture" },
+  { name: "Dão", region: "Dão", lat: 40.66, lon: -7.91, t_ann: 13.5, precip: 950, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Touriga Nacional viticulture" },
+  { name: "Algarve (Silves)", region: "Algarve", lat: 37.19, lon: -8.44, t_ann: 17.8, precip: 550, climate: "hot-summer Mediterranean", crops: ["citrus", "almond", "olive"], signature: "olive", identity: "citrus, almond, olive" },
+  { name: "Bordeaux (Médoc)", region: "Nouvelle-Aquitaine", lat: 45.2, lon: -0.78, t_ann: 13.5, precip: 900, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet, Merlot viticulture" },
+  { name: "Saint-Émilion", region: "Nouvelle-Aquitaine", lat: 44.89, lon: -0.16, t_ann: 13.2, precip: 870, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Merlot-dominant viticulture" },
+  { name: "Burgundy (Beaune)", region: "Bourgogne", lat: 47.02, lon: 4.84, t_ann: 11.0, precip: 720, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir, Chardonnay" },
+  { name: "Champagne (Épernay)", region: "Champagne", lat: 49.04, lon: 3.96, t_ann: 9.8, precip: 640, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "sparkling wine viticulture" },
+  { name: "Loire (Sancerre)", region: "Centre-Val de Loire", lat: 47.33, lon: 2.84, t_ann: 11.5, precip: 760, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Sauvignon Blanc viticulture" },
+  { name: "Rhône Nord (Hermitage)", region: "Auvergne-Rhône-Alpes", lat: 45.08, lon: 4.85, t_ann: 12.5, precip: 860, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Syrah viticulture" },
+  { name: "Rhône Sud (Châteauneuf)", region: "Provence", lat: 44.06, lon: 4.83, t_ann: 14.5, precip: 680, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "tea", identity: "Grenache, Syrah viticulture" },
+  { name: "Provence (Aix)", region: "Provence", lat: 43.53, lon: 5.45, t_ann: 14.8, precip: 580, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "rosé viticulture, olive" },
+  { name: "Languedoc (Béziers)", region: "Occitanie", lat: 43.35, lon: 3.22, t_ann: 15.0, precip: 580, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "viticulture, olive" },
+  { name: "Chianti Classico", region: "Toscana", lat: 43.47, lon: 11.31, t_ann: 13.5, precip: 780, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Sangiovese viticulture" },
+  { name: "Montalcino", region: "Toscana", lat: 43.06, lon: 11.49, t_ann: 14.0, precip: 720, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Brunello (Sangiovese)" },
+  { name: "Bolgheri", region: "Toscana", lat: 43.23, lon: 10.61, t_ann: 15.5, precip: 640, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "Cabernet-led super-Tuscan" },
+  { name: "Piedmont (Alba)", region: "Piemonte", lat: 44.7, lon: 8.03, t_ann: 12.5, precip: 800, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Nebbiolo (Barolo, Barbaresco)" },
+  { name: "Valpolicella", region: "Veneto", lat: 45.52, lon: 10.93, t_ann: 13.0, precip: 900, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Corvina (Amarone)" },
+  { name: "Prosecco (Conegliano)", region: "Veneto", lat: 45.89, lon: 12.3, t_ann: 12.8, precip: 1250, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Glera sparkling wine" },
+  { name: "Puglia (Salento)", region: "Puglia", lat: 40.24, lon: 18.16, t_ann: 17.2, precip: 620, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "Primitivo, olive" },
+  { name: "Puglia (Foggia)", region: "Puglia", lat: 41.46, lon: 15.54, t_ann: 16.0, precip: 480, climate: "hot-summer Mediterranean", crops: ["olive", "wine grape"], signature: "olive", identity: "durum wheat, olive, vineyard" },
+  { name: "Mount Etna, Sicily", region: "Sicilia", lat: 37.75, lon: 14.97, t_ann: 16.0, precip: 700, climate: "hot-summer Mediterranean", crops: ["wine grape", "citrus"], signature: "citrus", identity: "volcanic viticulture, citrus at lower slopes" },
+  { name: "Marsala, Sicily", region: "Sicilia", lat: 37.8, lon: 12.44, t_ann: 18.5, precip: 480, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "fortified wine, olive" },
+  { name: "Noto, Sicily", region: "Sicilia", lat: 36.89, lon: 15.07, t_ann: 17.8, precip: 520, climate: "hot-summer Mediterranean", crops: ["wine grape", "almond"], signature: "almond", identity: "Nero d'Avola, almond" },
+  { name: "Pantelleria", region: "Sicilia", lat: 36.84, lon: 11.95, t_ann: 18.5, precip: 450, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Zibibbo viticulture, caper" },
+  { name: "Crete (Heraklion)", region: "Crete", lat: 35.33, lon: 25.13, t_ann: 18.5, precip: 500, climate: "hot-summer Mediterranean", crops: ["olive", "wine grape"], signature: "olive", identity: "olive, vineyard" },
+  { name: "Kalamata", region: "Peloponnese", lat: 37.04, lon: 22.11, t_ann: 17.8, precip: 800, climate: "hot-summer Mediterranean", crops: ["olive"], signature: "olive", identity: "Koroneiki olive, fig" },
+  { name: "Nemea", region: "Peloponnese", lat: 37.82, lon: 22.66, t_ann: 16.5, precip: 650, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Agiorgitiko viticulture" },
+  { name: "Santorini", region: "Aegean", lat: 36.41, lon: 25.43, t_ann: 18.0, precip: 370, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Assyrtiko viticulture" },
+  { name: "Zahle, Beqaa", region: "Beqaa", lat: 33.85, lon: 35.9, t_ann: 16.2, precip: 650, climate: "hot-summer Mediterranean", crops: ["wine grape", "stone fruit", "olive"], signature: "olive", identity: "vineyard, stone fruit, olive" },
+  { name: "Jezzine", region: "South", lat: 33.55, lon: 35.58, t_ann: 16.5, precip: 900, climate: "hot-summer Mediterranean", crops: ["olive", "apple", "stone fruit"], signature: "olive", identity: "olive, apple, stone fruit" },
+  { name: "Judean Hills", region: "Central", lat: 31.77, lon: 35.1, t_ann: 17.0, precip: 500, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "viticulture, olive" },
+  { name: "Atlas (Meknès)", region: "Fès-Meknès", lat: 33.9, lon: -5.55, t_ann: 16.5, precip: 540, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive", "citrus"], signature: "olive", identity: "vineyard, olive, citrus" },
+  { name: "Souss Valley (Taroudant)", region: "Souss-Massa", lat: 30.47, lon: -8.88, t_ann: 19.5, precip: 220, climate: "hot semi-arid", crops: ["citrus"], signature: "citrus", identity: "argan, citrus, banana" },
+  { name: "Casablanca (Morocco)", region: "Casablanca-Settat", lat: 33.58, lon: -7.62, t_ann: 17.8, precip: 400, climate: "hot-summer Mediterranean", crops: ["citrus", "olive", "stone fruit"], signature: "olive", identity: "citrus, olive, stone fruit" },
+  { name: "Cap Bon (Tunisia)", region: "Cap Bon", lat: 36.7, lon: 10.75, t_ann: 18.0, precip: 450, climate: "hot-summer Mediterranean", crops: ["olive", "citrus", "wine grape"], signature: "olive", identity: "olive, citrus, viticulture" },
+  { name: "Sfax", region: "Sfax", lat: 34.74, lon: 10.76, t_ann: 19.5, precip: 220, climate: "hot semi-arid", crops: ["olive", "almond"], signature: "olive", identity: "the Mediterranean olive capital of Tunisia" },
+  { name: "Gaziantep", region: "SE Anatolia", lat: 37.07, lon: 37.38, t_ann: 15.5, precip: 560, climate: "hot-summer Mediterranean", crops: ["pistachio", "olive"], signature: "olive", identity: "pistachio (Antep), olive" },
+  { name: "Manisa (Aegean)", region: "Aegean", lat: 38.61, lon: 27.43, t_ann: 17.0, precip: 700, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "sultana grape, olive" },
+  { name: "Cappadocia", region: "Central Anatolia", lat: 38.64, lon: 34.83, t_ann: 11.0, precip: 380, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "viticulture (Öküzgözü)" },
+  { name: "Samarkand", region: "Samarqand", lat: 39.65, lon: 66.97, t_ann: 14.5, precip: 330, climate: "cold semi-arid", crops: ["stone fruit", "wine grape"], signature: "wine grape", identity: "apricot, table grape, stone fruit" },
+  { name: "Fergana Valley", region: "Fergana", lat: 40.52, lon: 71.78, t_ann: 13.5, precip: 270, climate: "cold semi-arid", crops: ["stone fruit"], signature: "pomegranate", identity: "pomegranate, stone fruit, cotton" },
+  { name: "Paso Robles", region: "Central Coast", lat: 35.63, lon: -120.66, t_ann: 15.3, precip: 364, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "viticulture, olive" },
+  { name: "Napa Valley", region: "North Coast", lat: 38.3, lon: -122.29, t_ann: 15.1, precip: 610, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "premium viticulture" },
+  { name: "Sonoma Valley", region: "North Coast", lat: 38.29, lon: -122.46, t_ann: 14.8, precip: 760, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir, Chardonnay" },
+  { name: "Russian River Valley", region: "North Coast", lat: 38.5, lon: -122.9, t_ann: 14.2, precip: 900, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir viticulture" },
+  { name: "Santa Barbara (Sta Rita)", region: "Central Coast", lat: 34.74, lon: -120.22, t_ann: 14.5, precip: 370, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir viticulture" },
+  { name: "Lodi", region: "Central Valley", lat: 38.13, lon: -121.27, t_ann: 16.5, precip: 430, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Zinfandel, vine" },
+  { name: "Tulare (San Joaquin)", region: "Central Valley", lat: 36.21, lon: -119.35, t_ann: 17.5, precip: 280, climate: "hot semi-arid", crops: ["citrus", "almond", "stone fruit"], signature: "almond", identity: "navel citrus, almond, stone fruit" },
+  { name: "Modesto (almonds)", region: "Central Valley", lat: 37.64, lon: -120.99, t_ann: 16.5, precip: 320, climate: "hot-summer Mediterranean", crops: ["almond", "walnut", "stone fruit"], signature: "almond", identity: "almond, walnut, stone fruit" },
+  { name: "Fresno", region: "Central Valley", lat: 36.75, lon: -119.77, t_ann: 17.0, precip: 290, climate: "hot semi-arid", crops: ["wine grape", "almond", "pistachio"], signature: "almond", identity: "table grape, almond, pistachio" },
+  { name: "Bakersfield (Kern)", region: "Central Valley", lat: 35.37, lon: -119.02, t_ann: 18.0, precip: 160, climate: "hot semi-arid", crops: ["almond", "pistachio", "wine grape"], signature: "almond", identity: "almond, pistachio, table grape" },
+  { name: "Visalia", region: "Central Valley", lat: 36.33, lon: -119.29, t_ann: 17.2, precip: 270, climate: "hot semi-arid", crops: ["citrus", "stone fruit"], signature: "citrus", identity: "navel, Valencia, stone fruit" },
+  { name: "Salinas Valley", region: "Central Coast", lat: 36.68, lon: -121.66, t_ann: 14.5, precip: 330, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "leafy greens, vine (Pinot)" },
+  { name: "Willamette Valley", region: "Oregon", lat: 45.15, lon: -122.94, t_ann: 11.5, precip: 1100, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir viticulture" },
+  { name: "Walla Walla", region: "Washington", lat: 46.07, lon: -118.33, t_ann: 11.5, precip: 450, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet, Syrah viticulture" },
+  { name: "Yakima Valley", region: "Washington", lat: 46.6, lon: -120.51, t_ann: 11.0, precip: 210, climate: "cold semi-arid", crops: ["apple", "cherry", "wine grape"], signature: "cherry", identity: "a notable cherry region" },
+  { name: "Wenatchee", region: "Washington", lat: 47.42, lon: -120.31, t_ann: 10.5, precip: 240, climate: "cold semi-arid", crops: ["apple", "pear", "cherry"], signature: "cherry", identity: "apple, pear, cherry" },
+  { name: "Hood River", region: "Oregon", lat: 45.71, lon: -121.52, t_ann: 11.5, precip: 800, climate: "oceanic temperate", crops: ["pear", "apple", "cherry", "wine grape"], signature: "cherry", identity: "a notable cherry region" },
+  { name: "Valle de Guadalupe", region: "Baja California", lat: 32.09, lon: -116.6, t_ann: 17.5, precip: 320, climate: "hot-summer Mediterranean", crops: ["wine grape", "olive"], signature: "olive", identity: "viticulture, olive" },
+  { name: "Hermosillo", region: "Sonora", lat: 29.07, lon: -110.95, t_ann: 23.5, precip: 260, climate: "hot desert", crops: ["wine grape", "citrus"], signature: "citrus", identity: "table grape, citrus, pecan" },
+  { name: "Culiacán", region: "Sinaloa", lat: 24.8, lon: -107.39, t_ann: 25.0, precip: 640, climate: "hot semi-arid", crops: ["mango"], signature: "mango", identity: "mango, tomato, corn" },
+  { name: "Uruapan, Michoacán", region: "Michoacán", lat: 19.42, lon: -102.06, t_ann: 19.5, precip: 1600, climate: "subtropical highland", crops: ["avocado"], signature: "avocado", identity: "Hass avocado heartland" },
+  { name: "Tacámbaro, Michoacán", region: "Michoacán", lat: 19.23, lon: -101.45, t_ann: 19.0, precip: 1300, climate: "subtropical highland", crops: ["avocado"], signature: "avocado", identity: "a notable avocado region" },
+  { name: "Peribán, Michoacán", region: "Michoacán", lat: 19.51, lon: -102.42, t_ann: 20.5, precip: 1250, climate: "subtropical highland", crops: ["avocado"], signature: "avocado", identity: "the centre of Mexico's Hass avocado country" },
+  { name: "Jalisco (highlands)", region: "Jalisco", lat: 20.52, lon: -102.3, t_ann: 19.0, precip: 900, climate: "monsoon subtropical", crops: ["avocado"], signature: "avocado", identity: "agave, avocado at margins" },
+  { name: "Antigua, Guatemala", region: "Sacatepéquez", lat: 14.56, lon: -90.73, t_ann: 18.5, precip: 1000, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "one of Central America's most celebrated coffee origins" },
+  { name: "Huehuetenango", region: "Huehuetenango", lat: 15.32, lon: -91.47, t_ann: 19.0, precip: 1150, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "specialty coffee" },
+  { name: "Boquete, Panama", region: "Chiriquí", lat: 8.78, lon: -82.44, t_ann: 18.5, precip: 2500, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "home to the world-famous Geisha coffee varietal" },
+  { name: "Tarrazú, Costa Rica", region: "San José", lat: 9.66, lon: -84.02, t_ann: 18.0, precip: 2500, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "specialty coffee" },
+  { name: "Mogi Mirim, SP", region: "São Paulo", lat: -22.43, lon: -46.95, t_ann: 21.0, precip: 1450, climate: "monsoon subtropical", crops: ["citrus", "coffee"], signature: "coffee", identity: "a Brazilian citrus and coffee heartland" },
+  { name: "Araraquara, SP", region: "São Paulo", lat: -21.8, lon: -48.18, t_ann: 22.5, precip: 1400, climate: "monsoon subtropical", crops: ["citrus"], signature: "citrus", identity: "citrus heartland" },
+  { name: "Bebedouro, SP", region: "São Paulo", lat: -20.95, lon: -48.48, t_ann: 23.5, precip: 1410, climate: "tropical savanna", crops: ["citrus"], signature: "citrus", identity: "orange juice citrus belt" },
+  { name: "São João da Boa Vista", region: "São Paulo", lat: -21.98, lon: -46.8, t_ann: 19.8, precip: 1500, climate: "monsoon subtropical", crops: ["coffee"], signature: "coffee", identity: "a Brazilian highland coffee zone" },
+  { name: "Poços de Caldas, MG", region: "Minas Gerais", lat: -21.79, lon: -46.56, t_ann: 18.0, precip: 1700, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "specialty coffee" },
+  { name: "Sul de Minas (Varginha)", region: "Minas Gerais", lat: -21.56, lon: -45.43, t_ann: 19.0, precip: 1560, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "Catuaí, Mundo Novo coffee" },
+  { name: "Cerrado Mineiro", region: "Minas Gerais", lat: -18.94, lon: -46.99, t_ann: 21.0, precip: 1550, climate: "tropical savanna", crops: ["coffee"], signature: "coffee", identity: "mechanized specialty coffee" },
+  { name: "Alta Mogiana (Franca)", region: "São Paulo", lat: -20.54, lon: -47.4, t_ann: 20.5, precip: 1600, climate: "monsoon subtropical", crops: ["coffee"], signature: "coffee", identity: "Bourbon, Mundo Novo coffee" },
+  { name: "Porto Alegre", region: "RS", lat: -30.03, lon: -51.23, t_ann: 19.5, precip: 1320, climate: "humid subtropical", crops: ["wine grape", "stone fruit"], signature: "wine grape", identity: "viticulture, stone fruit" },
+  { name: "Bento Gonçalves, RS", region: "RS", lat: -29.17, lon: -51.52, t_ann: 17.5, precip: 1750, climate: "humid subtropical", crops: ["wine grape"], signature: "wine grape", identity: "Brazilian viticulture hub" },
+  { name: "Campanha Gaúcha", region: "RS", lat: -30.95, lon: -55.53, t_ann: 19.0, precip: 1450, climate: "humid subtropical", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet, Tannat viticulture" },
+  { name: "Vale do São Francisco", region: "Pernambuco/Bahia", lat: -9.39, lon: -40.5, t_ann: 26.5, precip: 470, climate: "hot semi-arid", crops: ["wine grape", "mango"], signature: "mango", identity: "irrigated table grape, mango" },
+  { name: "Santa Cruz do Sul", region: "RS", lat: -29.72, lon: -52.43, t_ann: 19.0, precip: 1580, climate: "humid subtropical", crops: ["wine grape"], signature: "wine grape", identity: "tobacco, viticulture" },
+  { name: "Mendoza (Luján de Cuyo)", region: "Cuyo", lat: -33.03, lon: -68.87, t_ann: 16.3, precip: 240, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "Malbec viticulture heartland" },
+  { name: "Mendoza (Uco Valley)", region: "Cuyo", lat: -33.78, lon: -69.08, t_ann: 14.5, precip: 260, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "high-altitude Malbec, Cabernet" },
+  { name: "San Juan (Tulum)", region: "Cuyo", lat: -31.54, lon: -68.53, t_ann: 17.8, precip: 100, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "Syrah, table grape" },
+  { name: "La Rioja (Argentina)", region: "NW Argentina", lat: -29.41, lon: -66.85, t_ann: 20.5, precip: 370, climate: "hot desert", crops: ["olive", "wine grape"], signature: "olive", identity: "olive, viticulture" },
+  { name: "Catamarca", region: "NW Argentina", lat: -28.47, lon: -65.78, t_ann: 21.0, precip: 360, climate: "hot desert", crops: ["olive", "walnut", "wine grape"], signature: "olive", identity: "olive, walnut, viticulture" },
+  { name: "Cafayate, Salta", region: "NW Argentina", lat: -26.08, lon: -65.97, t_ann: 17.5, precip: 200, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "high-altitude Torrontés, Malbec" },
+  { name: "Valle de Uco (Tupungato)", region: "Cuyo", lat: -33.37, lon: -69.13, t_ann: 14.0, precip: 280, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "the high-altitude Argentine valley famous for premium Malbec" },
+  { name: "Patagonia (Río Negro)", region: "Patagonia", lat: -39.0, lon: -67.56, t_ann: 14.0, precip: 200, climate: "cold desert", crops: ["pear", "apple", "wine grape"], signature: "apple", identity: "pear, apple, Pinot Noir" },
+  { name: "Elqui Valley", region: "Norte Chico", lat: -30.05, lon: -70.5, t_ann: 15.8, precip: 100, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "Pisco viticulture, table grape" },
+  { name: "Limarí", region: "Norte Chico", lat: -30.62, lon: -71.2, t_ann: 15.5, precip: 120, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "Chardonnay, Syrah viticulture" },
+  { name: "Casablanca (Chile)", region: "Aconcagua", lat: -33.31, lon: -71.41, t_ann: 14.0, precip: 420, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Sauvignon Blanc, Pinot Noir" },
+  { name: "Maipo Valley", region: "Central Valley", lat: -33.68, lon: -70.7, t_ann: 14.8, precip: 320, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet Sauvignon viticulture" },
+  { name: "Colchagua", region: "Central Valley", lat: -34.7, lon: -71.28, t_ann: 15.0, precip: 600, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Carménère, Cabernet" },
+  { name: "Maule", region: "Central Valley", lat: -35.5, lon: -71.67, t_ann: 14.0, precip: 720, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Carignan, País, Cabernet" },
+  { name: "Itata", region: "South Valley", lat: -36.7, lon: -72.7, t_ann: 13.5, precip: 1100, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "old-vine País, Muscat" },
+  { name: "Bío Bío", region: "South Valley", lat: -37.47, lon: -72.35, t_ann: 12.8, precip: 1200, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir, Chardonnay" },
+  { name: "Quillota", region: "Aconcagua", lat: -32.88, lon: -71.25, t_ann: 15.0, precip: 320, climate: "hot-summer Mediterranean", crops: ["avocado", "citrus"], signature: "citrus", identity: "Hass avocado, citrus" },
+  { name: "Canelones, Uruguay", region: "Canelones", lat: -34.52, lon: -56.28, t_ann: 16.8, precip: 1050, climate: "humid subtropical", crops: ["wine grape"], signature: "wine grape", identity: "Tannat viticulture" },
+  { name: "Ica, Peru", region: "Coast", lat: -14.07, lon: -75.73, t_ann: 21.0, precip: 4, climate: "hot desert", crops: ["wine grape", "avocado", "blueberry"], signature: "avocado", identity: "Pisco viticulture, avocado, blueberry" },
+  { name: "Piura (Alto)", region: "North Coast", lat: -5.2, lon: -80.63, t_ann: 24.5, precip: 50, climate: "hot semi-arid", crops: ["mango"], signature: "mango", identity: "mango, banana, rice" },
+  { name: "Olmos", region: "Lambayeque", lat: -5.98, lon: -79.75, t_ann: 25.0, precip: 150, climate: "hot semi-arid", crops: ["blueberry", "avocado", "wine grape"], signature: "avocado", identity: "irrigated blueberry, avocado, table grape" },
+  { name: "Majes", region: "Arequipa", lat: -16.31, lon: -72.18, t_ann: 17.5, precip: 40, climate: "cold desert", crops: ["wine grape", "avocado"], signature: "avocado", identity: "irrigated quinoa, vine, avocado" },
+  { name: "Manizales (Eje Cafetero)", region: "Caldas", lat: 5.07, lon: -75.52, t_ann: 17.0, precip: 2100, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "specialty coffee" },
+  { name: "Quindío", region: "Eje Cafetero", lat: 4.53, lon: -75.68, t_ann: 18.0, precip: 2000, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "specialty coffee" },
+  { name: "Huila", region: "Huila", lat: 2.59, lon: -75.3, t_ann: 18.5, precip: 1700, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "premium Colombian coffee" },
+  { name: "Loja, Ecuador", region: "Loja", lat: -3.99, lon: -79.2, t_ann: 16.0, precip: 900, climate: "subtropical highland", crops: ["coffee", "stone fruit"], signature: "coffee", identity: "coffee, stone fruit" },
+  { name: "Stellenbosch", region: "Western Cape", lat: -33.94, lon: 18.86, t_ann: 16.2, precip: 787, climate: "warm-summer Mediterranean", crops: ["wine grape", "stone fruit"], signature: "wine grape", identity: "premium viticulture, stone fruit" },
+  { name: "Paarl", region: "Western Cape", lat: -33.73, lon: 18.96, t_ann: 16.8, precip: 640, climate: "warm-summer Mediterranean", crops: ["wine grape", "stone fruit", "citrus"], signature: "citrus", identity: "viticulture, stone fruit, citrus" },
+  { name: "Franschhoek", region: "Western Cape", lat: -33.91, lon: 19.12, t_ann: 16.5, precip: 870, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet, Syrah viticulture" },
+  { name: "Swartland", region: "Western Cape", lat: -33.25, lon: 18.72, t_ann: 16.8, precip: 400, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Chenin, Syrah, wheat" },
+  { name: "Robertson", region: "Western Cape", lat: -33.8, lon: 19.88, t_ann: 17.5, precip: 280, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Chardonnay, Colombard" },
+  { name: "Ceres", region: "Western Cape", lat: -33.37, lon: 19.31, t_ann: 14.8, precip: 550, climate: "warm-summer Mediterranean", crops: ["apple", "pear", "stone fruit"], signature: "apple", identity: "apple, pear, stone fruit" },
+  { name: "Citrusdal", region: "Western Cape", lat: -32.58, lon: 19.02, t_ann: 17.5, precip: 350, climate: "hot-summer Mediterranean", crops: ["citrus"], signature: "citrus", identity: "navel, Valencia orange" },
+  { name: "Barossa Valley", region: "South Australia", lat: -34.55, lon: 138.95, t_ann: 15.4, precip: 520, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Shiraz viticulture" },
+  { name: "McLaren Vale", region: "South Australia", lat: -35.22, lon: 138.54, t_ann: 15.8, precip: 530, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Grenache, Shiraz" },
+  { name: "Clare Valley", region: "South Australia", lat: -33.83, lon: 138.61, t_ann: 14.5, precip: 620, climate: "hot-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Riesling, Shiraz" },
+  { name: "Coonawarra", region: "South Australia", lat: -37.29, lon: 140.83, t_ann: 13.8, precip: 600, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet Sauvignon terra rossa" },
+  { name: "Margaret River", region: "Western Australia", lat: -33.95, lon: 115.07, t_ann: 16.5, precip: 1100, climate: "warm-summer Mediterranean", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet, Chardonnay" },
+  { name: "Hunter Valley", region: "NSW", lat: -32.77, lon: 151.25, t_ann: 17.2, precip: 750, climate: "humid subtropical", crops: ["wine grape"], signature: "wine grape", identity: "Semillon, Shiraz" },
+  { name: "Yarra Valley", region: "Victoria", lat: -37.65, lon: 145.52, t_ann: 13.5, precip: 1050, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir, Chardonnay" },
+  { name: "Tasmania (Tamar)", region: "Tasmania", lat: -41.22, lon: 146.92, t_ann: 12.0, precip: 800, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir, sparkling wine" },
+  { name: "Riverland", region: "South Australia", lat: -34.18, lon: 140.74, t_ann: 17.0, precip: 260, climate: "cold semi-arid", crops: ["citrus", "almond", "wine grape"], signature: "almond", identity: "citrus, almond, table grape" },
+  { name: "Sunraysia (Mildura)", region: "Victoria", lat: -34.21, lon: 142.15, t_ann: 17.0, precip: 280, climate: "cold semi-arid", crops: ["wine grape", "citrus", "almond"], signature: "almond", identity: "table grape, citrus, almond" },
+  { name: "Goulburn Valley", region: "Victoria", lat: -36.38, lon: 145.4, t_ann: 14.5, precip: 500, climate: "oceanic temperate", crops: ["stone fruit", "pear"], signature: "pear", identity: "stone fruit, pear" },
+  { name: "Batlow", region: "NSW", lat: -35.52, lon: 148.15, t_ann: 11.0, precip: 1100, climate: "oceanic temperate", crops: ["apple", "cherry"], signature: "cherry", identity: "one of Australia's signature apple and cherry regions" },
+  { name: "Marlborough", region: "South Island", lat: -41.52, lon: 173.95, t_ann: 13.0, precip: 700, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Sauvignon Blanc viticulture" },
+  { name: "Central Otago", region: "South Island", lat: -45.03, lon: 169.22, t_ann: 10.5, precip: 450, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Pinot Noir (southernmost)" },
+  { name: "Hawke's Bay", region: "North Island", lat: -39.64, lon: 176.85, t_ann: 14.0, precip: 800, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet, Syrah, Chardonnay" },
+  { name: "Nashik", region: "Maharashtra", lat: 20.0, lon: 73.78, t_ann: 24.0, precip: 620, climate: "tropical savanna", crops: ["wine grape"], signature: "wine grape", identity: "table + wine grape" },
+  { name: "Himachal (Kullu)", region: "Himachal Pradesh", lat: 32.0, lon: 77.1, t_ann: 14.0, precip: 1100, climate: "oceanic temperate", crops: ["apple", "stone fruit", "walnut"], signature: "walnut", identity: "apple, stone fruit, walnut" },
+  { name: "Kashmir (Sopore)", region: "Kashmir", lat: 34.28, lon: 74.47, t_ann: 12.5, precip: 650, climate: "warm-summer humid continental", crops: ["apple", "walnut", "cherry"], signature: "walnut", identity: "apple, walnut, cherry" },
+  { name: "Coorg", region: "Karnataka", lat: 12.33, lon: 75.73, t_ann: 20.5, precip: 2500, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "Arabica coffee, cardamom" },
+  { name: "Shandong (Yantai)", region: "Shandong", lat: 37.46, lon: 121.45, t_ann: 12.8, precip: 650, climate: "humid subtropical", crops: ["apple", "pear", "wine grape"], signature: "apple", identity: "apple, pear, vine" },
+  { name: "Ningxia", region: "Ningxia", lat: 38.47, lon: 106.27, t_ann: 10.0, precip: 200, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet viticulture (emerging)" },
+  { name: "Yunnan (Pu'er)", region: "Yunnan", lat: 22.77, lon: 100.98, t_ann: 18.0, precip: 1500, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "Arabica coffee, tea" },
+  { name: "Nyeri, Kenya", region: "Central Highlands", lat: -0.42, lon: 36.95, t_ann: 17.5, precip: 1100, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "SL28, Ruiru 11 coffee" },
+  { name: "Kiambu", region: "Central Kenya", lat: -1.17, lon: 36.83, t_ann: 17.0, precip: 1050, climate: "oceanic temperate", crops: ["coffee", "avocado"], signature: "coffee", identity: "coffee, avocado" },
+  { name: "Kirinyaga", region: "Central Kenya", lat: -0.5, lon: 37.28, t_ann: 17.8, precip: 1300, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "a renowned oceanic temperate coffee-growing highland" },
+  { name: "Sidamo (Yirgacheffe)", region: "SNNPR", lat: 6.16, lon: 38.21, t_ann: 18.5, precip: 1300, climate: "subtropical highland", crops: ["coffee"], signature: "coffee", identity: "heirloom Yirgacheffe coffee" },
+  { name: "Harrar", region: "Oromia", lat: 9.31, lon: 42.12, t_ann: 18.5, precip: 670, climate: "hot semi-arid", crops: ["coffee"], signature: "coffee", identity: "one of Ethiopia's oldest and most distinctive coffee origins" },
+  { name: "Mt Kenya (Meru)", region: "Meru", lat: -0.05, lon: 37.65, t_ann: 17.2, precip: 1400, climate: "oceanic temperate", crops: ["avocado", "coffee"], signature: "coffee", identity: "avocado (Hass), tea, coffee" },
+  { name: "Mosel (Bernkastel)", region: "Rheinland-Pfalz", lat: 49.92, lon: 7.07, t_ann: 10.5, precip: 700, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Riesling on slate" },
+  { name: "Rheingau", region: "Hessen", lat: 50.0, lon: 8.0, t_ann: 10.8, precip: 600, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Riesling viticulture" },
+  { name: "Baden (Kaiserstuhl)", region: "Baden-Württemberg", lat: 48.08, lon: 7.66, t_ann: 11.5, precip: 700, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Burgundy-style wine" },
+  { name: "Wachau", region: "Lower Austria", lat: 48.37, lon: 15.52, t_ann: 10.5, precip: 550, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Grüner Veltliner, Riesling" },
+  { name: "Tokaj", region: "Tokaj", lat: 48.13, lon: 21.42, t_ann: 10.5, precip: 600, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Furmint sweet wine" },
+  { name: "Villány", region: "South Hungary", lat: 45.87, lon: 18.45, t_ann: 11.5, precip: 650, climate: "oceanic temperate", crops: ["wine grape"], signature: "wine grape", identity: "Cabernet Franc, Merlot" },
+  { name: "Kent (South Downs)", region: "England", lat: 51.15, lon: 0.87, t_ann: 10.5, precip: 750, climate: "oceanic temperate", crops: ["wine grape", "apple", "hops"], signature: "hops", identity: "sparkling wine, apple, hops" },
+  { name: "Herefordshire", region: "England", lat: 52.06, lon: -2.72, t_ann: 9.8, precip: 780, climate: "oceanic temperate", crops: ["apple", "hops"], signature: "apple", identity: "cider apple, hop" },
+  { name: "Cambridgeshire Fens", region: "England", lat: 52.4, lon: 0.15, t_ann: 9.8, precip: 600, climate: "oceanic temperate", crops: ["wheat", "potato"], signature: "wheat", identity: "wheat, sugar beet, potato" },
+  { name: "East Lothian", region: "Scotland", lat: 55.95, lon: -2.8, t_ann: 9.0, precip: 650, climate: "oceanic temperate", crops: ["barley", "berry"], signature: "berry", identity: "barley, soft fruit" },
+  { name: "Westland (Boskoop)", region: "South Holland", lat: 52.08, lon: 4.3, t_ann: 10.2, precip: 820, climate: "oceanic temperate", crops: ["greenhouse"], signature: "greenhouse", identity: "greenhouse horticulture, bulb" },
+  { name: "Flevoland", region: "Flevoland", lat: 52.52, lon: 5.47, t_ann: 9.8, precip: 780, climate: "oceanic temperate", crops: ["potato", "sugar beet"], signature: "potato", identity: "potato, onion, sugar beet" },
+  { name: "Haspengouw", region: "Limburg", lat: 50.75, lon: 5.25, t_ann: 10.5, precip: 750, climate: "oceanic temperate", crops: ["apple", "pear", "cherry"], signature: "cherry", identity: "apple, pear, cherry" },
+  { name: "Lolland-Falster", region: "Denmark", lat: 54.7, lon: 11.7, t_ann: 8.8, precip: 630, climate: "oceanic temperate", crops: ["sugar beet", "wheat"], signature: "sugar beet", identity: "sugar beet, wheat, dairy" },
+  { name: "Jutland (Aarhus)", region: "Denmark", lat: 56.15, lon: 10.2, t_ann: 8.5, precip: 700, climate: "oceanic temperate", crops: ["potato", "wheat"], signature: "potato", identity: "dairy, potato, grain" },
+  { name: "Skåne (Lund)", region: "Skåne", lat: 55.7, lon: 13.2, t_ann: 8.5, precip: 620, climate: "oceanic temperate", crops: ["wheat", "sugar beet", "apple"], signature: "apple", identity: "grain, sugar beet, apple" },
+  { name: "Wielkopolska", region: "Greater Poland", lat: 52.25, lon: 17.0, t_ann: 8.8, precip: 530, climate: "oceanic temperate", crops: ["wheat", "rapeseed"], signature: "wheat", identity: "grain, rapeseed, potato" },
+  { name: "Małopolska (Kraków)", region: "Lesser Poland", lat: 50.05, lon: 19.93, t_ann: 8.5, precip: 680, climate: "warm-summer humid continental", crops: ["apple", "wheat"], signature: "apple", identity: "orchard (apple), grain" },
+  { name: "South Moravia", region: "Moravia", lat: 48.9, lon: 16.8, t_ann: 9.5, precip: 520, climate: "warm-summer humid continental", crops: ["wine grape", "apple"], signature: "wine grape", identity: "viticulture (Riesling), orchard" },
+  { name: "Transylvania (Cluj)", region: "Cluj", lat: 46.77, lon: 23.6, t_ann: 9.0, precip: 620, climate: "warm-summer humid continental", crops: ["wine grape", "apple"], signature: "apple", identity: "viticulture, apple, pasture" },
+  { name: "Moldova (Cotnari)", region: "Iași", lat: 47.37, lon: 26.82, t_ann: 9.5, precip: 560, climate: "warm-summer humid continental", crops: ["wine grape"], signature: "wine grape", identity: "Grasă de Cotnari viticulture" },
+  { name: "Chișinău (Cricova)", region: "Moldova", lat: 47.15, lon: 28.82, t_ann: 9.8, precip: 540, climate: "warm-summer humid continental", crops: ["wine grape"], signature: "wine grape", identity: "viticulture (sparkling)" },
+  { name: "Zakarpattia", region: "Transcarpathia", lat: 48.62, lon: 22.3, t_ann: 9.5, precip: 720, climate: "warm-summer humid continental", crops: ["apple", "wine grape"], signature: "apple", identity: "apple, vineyard, corn" },
+  { name: "Kherson", region: "Kherson", lat: 46.65, lon: 32.62, t_ann: 10.5, precip: 380, climate: "hot-summer humid continental", crops: ["wheat", "tomato"], signature: "wheat", identity: "wheat, tomato, watermelon" },
+  { name: "Krasnodar", region: "Krasnodar Krai", lat: 45.03, lon: 38.97, t_ann: 11.5, precip: 720, climate: "hot-summer humid continental", crops: ["wheat", "sunflower", "wine grape"], signature: "wine grape", identity: "a wine region known for hot-summer humid continental conditions" },
+  { name: "Kakheti (Telavi)", region: "Kakheti", lat: 41.92, lon: 45.47, t_ann: 12.0, precip: 820, climate: "humid subtropical", crops: ["wine grape"], signature: "wine grape", identity: "Saperavi viticulture, qvevri" },
+  { name: "Kvemo Kartli", region: "Kvemo Kartli", lat: 41.5, lon: 44.75, t_ann: 12.5, precip: 500, climate: "humid subtropical", crops: ["vegetable", "wine grape"], signature: "wine grape", identity: "vegetable, fruit, viticulture" },
+  { name: "Vayots Dzor", region: "Vayots Dzor", lat: 39.7, lon: 45.3, t_ann: 8.5, precip: 350, climate: "hot-summer continental Mediterranean", crops: ["wine grape", "apricot"], signature: "wine grape", identity: "high-elevation vineyard, apricot" },
+  { name: "Ararat Valley", region: "Armavir", lat: 40.05, lon: 44.5, t_ann: 11.5, precip: 300, climate: "hot-summer continental Mediterranean", crops: ["apricot", "wine grape"], signature: "pomegranate", identity: "apricot, pomegranate, viticulture" },
+  { name: "Ganja Plain", region: "Ganja-Gazakh", lat: 40.68, lon: 46.36, t_ann: 13.0, precip: 340, climate: "cold semi-arid", crops: ["pomegranate", "wine grape", "cotton"], signature: "pomegranate", identity: "pomegranate, viticulture, cotton" },
+  { name: "Osh", region: "Osh", lat: 40.53, lon: 72.8, t_ann: 12.5, precip: 340, climate: "cold desert", crops: ["stone fruit", "walnut"], signature: "walnut", identity: "stone fruit, walnut, cotton" },
+  { name: "Almaty foothills", region: "Almaty", lat: 43.25, lon: 76.9, t_ann: 10.5, precip: 650, climate: "hot-summer humid continental", crops: ["apple", "stone fruit", "wine grape"], signature: "apple", identity: "apple, stone fruit, viticulture" },
+  { name: "Shiraz (Fars)", region: "Fars", lat: 29.6, lon: 52.55, t_ann: 17.0, precip: 330, climate: "cold semi-arid", crops: ["wine grape", "citrus", "saffron"], signature: "citrus", identity: "viticulture (historic), citrus, saffron" },
+  { name: "Mashhad (Khorasan)", region: "Razavi Khorasan", lat: 36.3, lon: 59.58, t_ann: 14.5, precip: 240, climate: "cold semi-arid", crops: ["saffron", "pistachio", "stone fruit"], signature: "pistachio", identity: "saffron, pistachio, stone fruit" },
+  { name: "Urmia", region: "West Azerbaijan", lat: 37.55, lon: 45.08, t_ann: 11.5, precip: 340, climate: "hot-summer continental Mediterranean", crops: ["apple", "stone fruit", "wine grape"], signature: "apple", identity: "apple, stone fruit, vineyard" },
+  { name: "Rafsanjan", region: "Kerman", lat: 30.4, lon: 55.99, t_ann: 18.5, precip: 80, climate: "hot desert", crops: ["pistachio"], signature: "pistachio", identity: "pistachio capital" },
+  { name: "Antalya plain", region: "Mediterranean", lat: 36.88, lon: 30.7, t_ann: 18.5, precip: 1050, climate: "hot-summer Mediterranean", crops: ["citrus", "greenhouse"], signature: "citrus", identity: "citrus, greenhouse, banana" },
+  { name: "Çukurova (Adana)", region: "Mediterranean", lat: 37.0, lon: 35.3, t_ann: 19.0, precip: 680, climate: "hot-summer Mediterranean", crops: ["citrus", "cotton"], signature: "citrus", identity: "citrus, cotton, soybean" },
+  { name: "Golan Heights", region: "North District", lat: 33.05, lon: 35.75, t_ann: 15.0, precip: 800, climate: "hot-summer Mediterranean", crops: ["apple", "cherry", "wine grape"], signature: "cherry", identity: "apple, cherry, viticulture" },
+  { name: "Jordan Valley (Deir Alla)", region: "Balqa", lat: 32.22, lon: 35.62, t_ann: 22.5, precip: 290, climate: "hot desert", crops: ["banana", "citrus", "vegetable"], signature: "citrus", identity: "banana, citrus, winter vegetable" },
+  { name: "Karak plateau", region: "Karak", lat: 31.18, lon: 35.7, t_ann: 16.5, precip: 310, climate: "cold semi-arid", crops: ["olive", "almond", "stone fruit"], signature: "olive", identity: "olive, almond, stone fruit" },
+  { name: "Ta'if", region: "Mecca Region", lat: 21.25, lon: 40.52, t_ann: 21.5, precip: 170, climate: "hot desert", crops: ["rose", "pomegranate", "wine grape"], signature: "pomegranate", identity: "Taif rose, pomegranate, grape" },
+  { name: "Al Ahsa oasis", region: "Eastern Province", lat: 25.42, lon: 49.62, t_ann: 26.0, precip: 75, climate: "hot desert", crops: ["date"], signature: "date", identity: "date palm (oasis irrigation)" },
+  { name: "Nile Delta (Kafr el-Sheikh)", region: "Nile Delta", lat: 31.12, lon: 30.94, t_ann: 20.5, precip: 180, climate: "hot desert", crops: ["cotton", "rice", "citrus"], signature: "citrus", identity: "a notable citrus region" },
+  { name: "Beni Suef (Middle Egypt)", region: "Upper Egypt", lat: 29.07, lon: 31.1, t_ann: 22.0, precip: 20, climate: "hot desert", crops: ["wheat", "citrus"], signature: "citrus", identity: "a notable citrus region" },
+  { name: "Luxor (Upper Egypt)", region: "Upper Egypt", lat: 25.7, lon: 32.65, t_ann: 25.5, precip: 5, climate: "hot desert", crops: ["sugarcane", "date"], signature: "date", identity: "sugarcane, date palm, tomato" },
+  { name: "Chlef", region: "Chlef", lat: 36.17, lon: 1.33, t_ann: 18.5, precip: 420, climate: "hot-summer Mediterranean", crops: ["citrus", "tomato"], signature: "citrus", identity: "citrus, cereal, tomato" },
+  { name: "Setif plateau", region: "Setif", lat: 36.19, lon: 5.41, t_ann: 14.5, precip: 430, climate: "hot-summer Mediterranean", crops: ["wheat", "olive"], signature: "olive", identity: "cereal, legume, olive" },
+  { name: "Fès-Meknès", region: "Fès-Meknès", lat: 33.89, lon: -5.55, t_ann: 17.5, precip: 550, climate: "hot-summer Mediterranean", crops: ["olive", "wine grape", "wheat"], signature: "olive", identity: "olive, viticulture, cereal" },
+  { name: "Jos Plateau", region: "Plateau State", lat: 9.92, lon: 8.9, t_ann: 21.5, precip: 1350, climate: "tropical savanna", crops: ["potato", "vegetable"], signature: "tea", identity: "Irish potato, vegetable, fruit" },
+  { name: "Kano (Sudan savanna)", region: "Kano", lat: 12.0, lon: 8.52, t_ann: 26.5, precip: 870, climate: "hot semi-arid", crops: ["sorghum", "tomato", "cotton"], signature: "cotton", identity: "a notable cotton region" },
+  { name: "Ashanti (Kumasi)", region: "Ashanti", lat: 6.68, lon: -1.62, t_ann: 26.0, precip: 1420, climate: "tropical savanna", crops: ["cocoa", "oil palm"], signature: "cocoa", identity: "cocoa, oil palm, plantain" },
+  { name: "Yamoussoukro", region: "Côte d'Ivoire", lat: 6.82, lon: -5.28, t_ann: 26.5, precip: 1200, climate: "tropical savanna", crops: ["cocoa", "cashew", "coffee"], signature: "coffee", identity: "cocoa, cashew, coffee" },
+  { name: "Arusha", region: "Arusha", lat: -3.37, lon: 36.68, t_ann: 19.5, precip: 1000, climate: "oceanic temperate", crops: ["coffee", "flower", "vegetable"], signature: "coffee", identity: "coffee, floriculture, vegetable" },
+  { name: "Kilimanjaro slopes", region: "Kilimanjaro", lat: -3.1, lon: 37.45, t_ann: 18.0, precip: 1600, climate: "oceanic temperate", crops: ["coffee", "banana"], signature: "coffee", identity: "Arabica coffee, banana, dairy" },
+  { name: "Jinja (Lake Victoria)", region: "Eastern Uganda", lat: 0.43, lon: 33.2, t_ann: 22.5, precip: 1250, climate: "tropical rainforest", crops: ["sugarcane", "coffee", "tea"], signature: "coffee", identity: "sugarcane, coffee, tea" },
+  { name: "Kabale highlands", region: "Kigezi", lat: -1.25, lon: 29.98, t_ann: 15.5, precip: 1060, climate: "oceanic temperate", crops: ["potato", "tea", "coffee"], signature: "coffee", identity: "Irish potato, tea, coffee" },
+  { name: "Musanze", region: "Northern Province", lat: -1.5, lon: 29.63, t_ann: 14.5, precip: 1260, climate: "oceanic temperate", crops: ["potato", "coffee"], signature: "coffee", identity: "Irish potato, pyrethrum, coffee" },
+  { name: "Huye (Butare)", region: "Southern Province", lat: -2.6, lon: 29.74, t_ann: 19.0, precip: 1180, climate: "oceanic temperate", crops: ["coffee", "tea", "banana"], signature: "coffee", identity: "coffee, tea, banana" },
+  { name: "Yirgacheffe", region: "SNNPR", lat: 6.16, lon: 38.2, t_ann: 17.5, precip: 1450, climate: "oceanic temperate", crops: ["coffee"], signature: "coffee", identity: "washed Arabica coffee" },
+  { name: "Chingola (Copperbelt)", region: "Copperbelt", lat: -12.52, lon: 27.87, t_ann: 20.5, precip: 1230, climate: "monsoon subtropical", crops: ["maize", "soybean"], signature: "maize", identity: "maize, soybean, horticulture" },
+  { name: "Harare North", region: "Mashonaland", lat: -17.76, lon: 31.1, t_ann: 18.0, precip: 830, climate: "monsoon subtropical", crops: ["tobacco", "maize"], signature: "tobacco", identity: "tobacco, maize, horticulture" },
+  { name: "Antananarivo highlands", region: "Analamanga", lat: -18.88, lon: 47.5, t_ann: 18.5, precip: 1350, climate: "subtropical highland", crops: ["rice", "coffee"], signature: "coffee", identity: "rice, vegetable, coffee" },
+  { name: "Snake River Plain (Nampa)", region: "Idaho", lat: 43.58, lon: -116.56, t_ann: 11.5, precip: 290, climate: "cold semi-arid", crops: ["potato", "sugar beet", "wine grape"], signature: "wine grape", identity: "a wine region known for cold semi-arid conditions" },
+  { name: "Finger Lakes (Geneva)", region: "New York", lat: 42.87, lon: -77.0, t_ann: 9.0, precip: 890, climate: "warm-summer humid continental", crops: ["wine grape", "apple"], signature: "apple", identity: "Riesling, Cabernet Franc, apple" },
+  { name: "Niagara Escarpment (NY)", region: "New York", lat: 43.15, lon: -79.0, t_ann: 9.8, precip: 880, climate: "warm-summer humid continental", crops: ["stone fruit", "wine grape"], signature: "cherry", identity: "peach, cherry, grape" },
+  { name: "Door Peninsula", region: "Wisconsin", lat: 45.25, lon: -87.2, t_ann: 6.5, precip: 780, climate: "warm-summer humid continental", crops: ["cherry", "apple"], signature: "cherry", identity: "cherry, apple, dairy" },
+  { name: "Traverse City", region: "Michigan", lat: 44.77, lon: -85.62, t_ann: 7.5, precip: 830, climate: "warm-summer humid continental", crops: ["cherry", "apple", "wine grape"], signature: "cherry", identity: "tart cherry, apple, vine" },
+  { name: "Chesapeake (Maryland)", region: "Maryland", lat: 38.97, lon: -76.5, t_ann: 13.0, precip: 1070, climate: "humid subtropical", crops: ["tomato", "soybean", "apple"], signature: "apple", identity: "a notable apple region" },
+  { name: "Shenandoah Valley", region: "Virginia", lat: 38.7, lon: -78.65, t_ann: 12.2, precip: 900, climate: "humid subtropical", crops: ["apple", "wine grape", "stone fruit"], signature: "apple", identity: "apple, vineyard, stone fruit" },
+  { name: "Mississippi Delta", region: "Mississippi", lat: 33.47, lon: -90.9, t_ann: 17.8, precip: 1370, climate: "humid subtropical", crops: ["cotton", "rice", "soybean"], signature: "cotton", identity: "a notable cotton region" },
+  { name: "Florida Ridge (Lake Wales)", region: "Florida", lat: 27.9, lon: -81.6, t_ann: 22.5, precip: 1280, climate: "humid subtropical", crops: ["citrus", "strawberry", "tomato"], signature: "citrus", identity: "citrus, strawberry, tomato" },
+  { name: "Imperial Valley", region: "California", lat: 32.85, lon: -115.55, t_ann: 22.5, precip: 70, climate: "hot desert", crops: ["vegetable", "alfalfa", "date"], signature: "date", identity: "winter vegetable, alfalfa, date" },
+  { name: "Oxnard Plain", region: "California", lat: 34.2, lon: -119.15, t_ann: 16.0, precip: 390, climate: "hot-summer Mediterranean", crops: ["strawberry", "celery", "berry"], signature: "berry", identity: "strawberry, celery, berry" },
+  { name: "Mogiana Paulista", region: "São Paulo", lat: -20.95, lon: -47.4, t_ann: 21.5, precip: 1560, climate: "monsoon subtropical", crops: ["coffee"], signature: "coffee", identity: "Arabica coffee (Mogiana)" },
+  { name: "Espírito Santo (Conilon)", region: "Espírito Santo", lat: -19.55, lon: -40.63, t_ann: 23.5, precip: 1200, climate: "tropical savanna", crops: ["coffee"], signature: "coffee", identity: "Robusta (Conilon) coffee" },
+  { name: "Chapada Diamantina", region: "Bahia", lat: -12.85, lon: -41.32, t_ann: 22.0, precip: 1030, climate: "tropical savanna", crops: ["coffee"], signature: "coffee", identity: "Arabica coffee, cocoa" },
+  { name: "Rio Grande do Sul (Serra)", region: "Rio Grande do Sul", lat: -29.17, lon: -51.18, t_ann: 16.0, precip: 1600, climate: "oceanic temperate", crops: ["wine grape", "apple", "stone fruit"], signature: "apple", identity: "viticulture, apple, stone fruit" },
+  { name: "Paraná (Londrina)", region: "Paraná", lat: -23.31, lon: -51.17, t_ann: 20.5, precip: 1580, climate: "humid subtropical", crops: ["soybean", "wheat", "coffee"], signature: "coffee", identity: "soybean, wheat, coffee" },
+  { name: "Chikmagalur", region: "Karnataka", lat: 13.32, lon: 75.77, t_ann: 21.5, precip: 1870, climate: "monsoon subtropical", crops: ["coffee"], signature: "coffee", identity: "the Indian highland where Arabica coffee was first grown" },
+  { name: "Coorg (Madikeri)", region: "Karnataka", lat: 12.42, lon: 75.74, t_ann: 20.0, precip: 2830, climate: "monsoon subtropical", crops: ["coffee", "cardamom"], signature: "coffee", identity: "Arabica + Robusta coffee, cardamom" },
+  { name: "Kulu (Himachal)", region: "Himachal Pradesh", lat: 31.96, lon: 77.11, t_ann: 13.0, precip: 1000, climate: "monsoon subtropical", crops: ["apple"], signature: "apple", identity: "apple (Royal Delicious)" },
+  { name: "Srinagar Valley", region: "Jammu & Kashmir", lat: 34.08, lon: 74.8, t_ann: 13.5, precip: 720, climate: "warm-summer humid continental", crops: ["apple", "saffron", "almond"], signature: "almond", identity: "apple, saffron, almond" },
+  { name: "Pune (Nashik region)", region: "Maharashtra", lat: 18.52, lon: 73.85, t_ann: 24.5, precip: 740, climate: "tropical savanna", crops: ["wine grape", "pomegranate", "sugarcane"], signature: "pomegranate", identity: "table grape, pomegranate, sugarcane" },
+  { name: "Alphonso coast (Ratnagiri)", region: "Maharashtra", lat: 16.99, lon: 73.3, t_ann: 27.0, precip: 3100, climate: "tropical monsoon", crops: ["mango", "cashew"], signature: "mango", identity: "Alphonso mango, cashew" },
+  { name: "Xinjiang (Turpan)", region: "Xinjiang", lat: 42.95, lon: 89.18, t_ann: 14.5, precip: 20, climate: "cold desert", crops: ["wine grape", "cotton", "melon"], signature: "wine grape", identity: "table grape, melon, cotton" },
+  { name: "Ningxia (Helan Mountain)", region: "Ningxia", lat: 38.42, lon: 106.0, t_ann: 9.0, precip: 200, climate: "cold desert", crops: ["wine grape"], signature: "wine grape", identity: "viticulture (Cabernet, Marselan)" },
+  { name: "Hokkaido (Furano)", region: "Hokkaido", lat: 43.35, lon: 142.38, t_ann: 6.5, precip: 930, climate: "warm-summer humid continental", crops: ["wine grape", "onion", "dairy"], signature: "wine grape", identity: "a wine region known for warm-summer humid continental conditions" },
+  { name: "Yamanashi", region: "Yamanashi", lat: 35.66, lon: 138.57, t_ann: 14.5, precip: 1140, climate: "humid subtropical", crops: ["wine grape", "stone fruit"], signature: "wine grape", identity: "Koshu viticulture, stone fruit" },
+  { name: "Ehime (Setouchi)", region: "Ehime", lat: 33.84, lon: 132.77, t_ann: 16.0, precip: 1290, climate: "humid subtropical", crops: ["citrus", "kiwi"], signature: "citrus", identity: "mandarin citrus, kiwi" },
+  { name: "Gyeongsangbuk (Yeongcheon)", region: "North Gyeongsang", lat: 35.97, lon: 128.94, t_ann: 13.5, precip: 1100, climate: "humid subtropical", crops: ["apple", "wine grape", "stone fruit"], signature: "apple", identity: "apple, grape, peach" },
+  { name: "Jeju Island", region: "Jeju", lat: 33.45, lon: 126.55, t_ann: 15.5, precip: 1500, climate: "humid subtropical", crops: ["citrus", "tea"], signature: "citrus", identity: "mandarin, green tea" },
+  { name: "Dalat (Lâm Đồng)", region: "Lâm Đồng", lat: 11.94, lon: 108.45, t_ann: 18.5, precip: 1750, climate: "subtropical highland", crops: ["coffee", "flower", "strawberry"], signature: "coffee", identity: "Arabica coffee, flower, strawberry" },
+  { name: "Buôn Ma Thuột", region: "Dak Lak", lat: 12.67, lon: 108.05, t_ann: 23.5, precip: 1830, climate: "tropical savanna", crops: ["coffee"], signature: "coffee", identity: "Robusta coffee capital" },
+  { name: "Mekong Delta", region: "Can Tho", lat: 10.03, lon: 105.78, t_ann: 27.0, precip: 1490, climate: "tropical savanna", crops: ["rice", "fruit"], signature: "rice", identity: "rice, fruit, aquaculture" },
+  { name: "Chiang Mai highlands", region: "Chiang Mai", lat: 19.0, lon: 98.9, t_ann: 25.5, precip: 1120, climate: "tropical savanna", crops: ["coffee", "longan", "strawberry"], signature: "coffee", identity: "Arabica coffee, longan, strawberry" },
+  { name: "Ratchaburi plain", region: "Ratchaburi", lat: 13.52, lon: 99.82, t_ann: 27.5, precip: 1050, climate: "tropical savanna", crops: ["pomelo", "coconut", "sugarcane"], signature: "coconut", identity: "pomelo, coconut, sugarcane" },
+  { name: "West Java (Bandung)", region: "West Java", lat: -6.95, lon: 107.62, t_ann: 22.5, precip: 2200, climate: "oceanic temperate", crops: ["coffee", "tea", "vegetable"], signature: "coffee", identity: "Arabica coffee, tea, horticulture" },
+  { name: "Lampung", region: "Lampung", lat: -5.43, lon: 105.26, t_ann: 26.5, precip: 2200, climate: "tropical monsoon", crops: ["coffee", "pineapple"], signature: "coffee", identity: "coffee (Robusta), pepper, pineapple" },
+  { name: "Cordillera (Benguet)", region: "Benguet", lat: 16.4, lon: 120.59, t_ann: 17.0, precip: 3580, climate: "oceanic temperate", crops: ["vegetable", "coffee", "strawberry"], signature: "coffee", identity: "highland vegetable, coffee, strawberry" },
+  { name: "Davao (Mindanao)", region: "Davao", lat: 7.07, lon: 125.61, t_ann: 27.0, precip: 2020, climate: "tropical rainforest", crops: ["banana", "cocoa", "durian"], signature: "cocoa", identity: "a notable cocoa region" },
+  { name: "Okanagan Valley", region: "British Columbia", lat: 49.88, lon: -119.5, t_ann: 9.8, precip: 330, climate: "warm-summer humid continental", crops: ["wine grape", "apple", "cherry", "stone fruit"], signature: "cherry", identity: "a notable cherry region" },
+  { name: "Niagara Peninsula", region: "Ontario", lat: 43.1, lon: -79.25, t_ann: 8.8, precip: 870, climate: "warm-summer humid continental", crops: ["wine grape", "stone fruit"], signature: "wine grape", identity: "viticulture (icewine), stone fruit" },
+  { name: "Annapolis Valley", region: "Nova Scotia", lat: 45.07, lon: -64.5, t_ann: 7.5, precip: 1200, climate: "warm-summer humid continental", crops: ["apple", "wine grape", "berry"], signature: "apple", identity: "apple, viticulture, berry" },
+  { name: "Tarija", region: "Tarija", lat: -21.53, lon: -64.73, t_ann: 17.5, precip: 620, climate: "cold semi-arid", crops: ["wine grape"], signature: "wine grape", identity: "high-altitude viticulture (Tannat, Moscatel)" },
+  { name: "Cochabamba Valley", region: "Cochabamba", lat: -17.39, lon: -66.16, t_ann: 18.0, precip: 550, climate: "subtropical highland", crops: ["stone fruit", "quinoa", "potato"], signature: "stone fruit", identity: "stone fruit, quinoa, potato" },
+  { name: "Santa Cruz del Norte", region: "Mayabeque", lat: 23.15, lon: -81.92, t_ann: 25.5, precip: 1330, climate: "tropical savanna", crops: ["sugarcane", "citrus", "tobacco"], signature: "citrus", identity: "sugarcane, citrus, tobacco" },
+  { name: "Blue Mountains (Jamaica)", region: "Portland", lat: 18.05, lon: -76.65, t_ann: 17.5, precip: 2200, climate: "tropical rainforest", crops: ["coffee"], signature: "coffee", identity: "Blue Mountain coffee" },
+  { name: "Boaco highlands", region: "Boaco", lat: 12.47, lon: -85.67, t_ann: 22.5, precip: 1450, climate: "tropical savanna", crops: ["coffee", "dairy"], signature: "coffee", identity: "coffee, dairy, bean" },
+  { name: "Bundaberg", region: "Queensland", lat: -24.87, lon: 152.35, t_ann: 21.5, precip: 1140, climate: "humid subtropical", crops: ["sugarcane", "macadamia", "tomato"], signature: "sugarcane", identity: "sugarcane, macadamia, tomato" },
+  { name: "Ord River (Kununurra)", region: "Western Australia", lat: -15.77, lon: 128.74, t_ann: 28.0, precip: 810, climate: "hot semi-arid", crops: ["mango", "melon"], signature: "mango", identity: "mango, sandalwood, melon" },
+  { name: "Taichung (Central Taiwan)", region: "Central Taiwan", lat: 24.15, lon: 120.68, t_ann: 23.0, precip: 1720, climate: "humid subtropical", crops: ["mango", "lychee", "wine grape", "tea"], signature: "mango", identity: "a famous mango-growing region" },
+  { name: "Swat Valley", region: "KPK", lat: 35.22, lon: 72.43, t_ann: 15.5, precip: 800, climate: "monsoon subtropical", crops: ["apple", "apricot", "stone fruit"], signature: "apple", identity: "a notable apple region" },
+  { name: "Multan (Punjab)", region: "Punjab", lat: 30.18, lon: 71.47, t_ann: 25.0, precip: 200, climate: "hot desert", crops: ["mango", "citrus", "cotton"], signature: "citrus", identity: "mango (Chaunsa), citrus, cotton" },
+  { name: "Dhaka Delta", region: "Dhaka", lat: 23.78, lon: 90.38, t_ann: 26.0, precip: 2080, climate: "tropical savanna", crops: ["rice", "jute", "vegetable"], signature: "rice", identity: "rice (boro/aman), jute, vegetable" },
+  { name: "Anuradhapura", region: "North Central", lat: 8.34, lon: 80.4, t_ann: 27.5, precip: 1450, climate: "tropical savanna", crops: ["rice", "banana", "coconut", "mango"], signature: "mango", identity: "a famous mango-growing region" },
+  { name: "Kinmen/Fujian coast", region: "Fujian", lat: 24.45, lon: 118.3, t_ann: 21.0, precip: 1500, climate: "humid subtropical", crops: ["tea", "lychee", "longan"], signature: "tea", identity: "oolong tea, longan, lychee" },
+  { name: "Erzurum plateau", region: "Eastern Anatolia", lat: 39.91, lon: 41.27, t_ann: 5.5, precip: 410, climate: "warm-summer continental Mediterranean", crops: ["wheat", "barley"], signature: "tea", identity: "grain, livestock, honey" },
+  { name: "Kandahar", region: "Kandahar", lat: 31.61, lon: 65.72, t_ann: 17.5, precip: 180, climate: "cold desert", crops: ["pomegranate", "almond", "wine grape"], signature: "almond", identity: "a major almond-producing zone" },
+  { name: "Bishkek plain", region: "Chuy", lat: 42.87, lon: 74.6, t_ann: 10.5, precip: 440, climate: "hot-summer humid continental", crops: ["sugar beet", "potato", "stone fruit"], signature: "stone fruit", identity: "sugar beet, potato, stone fruit" },
+  { name: "Madre de Dios (highlands)", region: "Cusco", lat: -13.52, lon: -71.97, t_ann: 11.0, precip: 720, climate: "subtropical highland", crops: ["quinoa", "potato"], signature: "quinoa", identity: "quinoa, potato (native variety), kiwicha" },
+];
+
+function haversine(a, b) {
+  const R = 6371;
+  const aLon = a.lon ?? a.lng;
+  const bLon = b.lon ?? b.lng;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLon = (bLon - aLon) * Math.PI / 180;
+  const lat1 = a.lat * Math.PI / 180, lat2 = b.lat * Math.PI / 180;
+  const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+// Fetch a quick climate reading from Open-Meteo (with localStorage cache)
+async function fetchQuickClimate(lat, lon) {
+  const cacheKey = `parallel_quick:${lat.toFixed(3)}:${lon.toFixed(3)}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const entry = JSON.parse(cached);
+      if (Date.now() - entry.ts < 24*60*60*1000) return entry.data;
+    } catch (e) {}
+  }
+
+  // TIER 1: Open-Meteo — faster, higher resolution, but stricter rate limit
+  const primaryResult = await fetchFromOpenMeteo(lat, lon);
+  if (primaryResult && !primaryResult.__error) {
+    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: primaryResult }));
+    return primaryResult;
+  }
+
+  // TIER 2: NASA POWER — when Open-Meteo is rate-limited or down
+  console.log('Open-Meteo unavailable, falling back to NASA POWER', primaryResult);
+  const fallbackResult = await fetchFromNASAPower(lat, lon);
+  if (fallbackResult && !fallbackResult.__error) {
+    // Tag the source so the UI can note it if needed
+    fallbackResult._source = 'nasa_power';
+    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: fallbackResult }));
+    return fallbackResult;
+  }
+
+  // Both failed — return the more informative error
+  return fallbackResult || primaryResult || { __error: 'unknown' };
+}
+
+async function fetchFromOpenMeteo(lat, lon) {
+  const endYear = new Date().getFullYear() - 1;
+  const startYear = endYear - 9;
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startYear}-01-01&end_date=${endYear}-12-31&daily=temperature_2m_mean,precipitation_sum&timezone=auto`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 429) return { __error: 'rate_limit', status: 429 };
+      return { __error: 'fetch_failed', status: res.status };
+    }
+    const data = await res.json();
+    if (!data.daily || !data.daily.temperature_2m_mean) {
+      return { __error: 'bad_data' };
+    }
+    const tmean = data.daily.temperature_2m_mean.filter(v => v != null);
+    const precip = data.daily.precipitation_sum;
+    if (tmean.length === 0) return { __error: 'no_data' };
+    const t_ann = tmean.reduce((a,b) => a+b, 0) / tmean.length;
+    const precip_ann = precip.reduce((a,b) => a+(b||0), 0) / 10;
+    return { t_ann, precip_ann, _source: 'open_meteo' };
+  } catch (e) {
+    return { __error: 'network', message: e.message };
+  }
+}
+
+async function fetchFromNASAPower(lat, lon) {
+  // NASA POWER climatology endpoint returns long-term averages directly
+  // T2M = 2m air temp (°C), PRECTOTCORR = corrected precipitation (mm/day)
+  const url = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,PRECTOTCORR&community=AG&longitude=${lon}&latitude=${lat}&format=JSON`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 429) return { __error: 'rate_limit', status: 429 };
+      return { __error: 'fetch_failed', status: res.status };
+    }
+    const data = await res.json();
+    const params = data?.properties?.parameter;
+    if (!params || !params.T2M || !params.PRECTOTCORR) {
+      return { __error: 'bad_data' };
+    }
+    // The ANN key holds the annual average for each parameter
+    const t_ann = params.T2M.ANN;
+    const precip_mm_per_day = params.PRECTOTCORR.ANN;
+    if (t_ann == null || precip_mm_per_day == null || t_ann < -90) {
+      return { __error: 'no_data' };
+    }
+    // Convert daily precipitation mm/day to annual total mm/year
+    const precip_ann = precip_mm_per_day * 365.25;
+    return { t_ann, precip_ann };
+  } catch (e) {
+    return { __error: 'network', message: e.message };
+  }
+}
+
+// Find top twins from the demo pool based on climate distance
+function findTwins(userClimate, userCoords) {
+  const scored = DEMO_POOL.map(p => {
+    // 500km exclusion
+    const distKm = haversine(userCoords, { lat: p.lat, lon: p.lon });
+    if (distKm < 500) return null;
+    // Weighted climate distance — normalized to expected variation
+    const dTemp = Math.abs(p.t_ann - userClimate.t_ann) / 25;
+    const dPrecip = Math.abs(p.precip - userClimate.precip_ann) / 1800;
+    const dist = Math.sqrt(dTemp * dTemp + dPrecip * dPrecip);
+    // With a 300-region pool, a good twin should be genuinely close.
+    // Multiplier 2.0 gives ~85% at small differences, ~50% at moderate ones.
+    const similarity = Math.max(0, Math.min(1, 1 - dist * 2.0));
+    return { ...p, similarity, distKm };
+  }).filter(x => x !== null);
+  scored.sort((a, b) => b.similarity - a.similarity);
+  return scored.slice(0, 3);
+}
+
+// Build 10 findings — striking, surprising, shareable
+function buildFindings(userClimate, topTwin, coords, allTwins) {
+  const findings = [];
+  const t = userClimate.t_ann;
+  const p = userClimate.precip_ann;
+
+  const tempBand = t < 8 ? 'cool' : t < 13 ? 'mild' : t < 18 ? 'temperate' : t < 24 ? 'warm' : 'hot';
+  const precipBand = p < 300 ? 'arid' : p < 600 ? 'semi-arid' : p < 1000 ? 'moderate' : p < 1600 ? 'wet' : 'very wet';
+
+  const top = topTwin;
+  const topName = top?.name?.split(',')[0] || null;
+  const topDist = top ? Math.round(top.distKm).toLocaleString() : null;
+
+  // Pre-compute global crop frequency
+  const globalCounts = {};
+  if (typeof DEMO_POOL !== 'undefined') {
+    DEMO_POOL.forEach(pp => (pp.crops || []).forEach(c => {
+      globalCounts[c] = (globalCounts[c] || 0) + 1;
+    }));
+  }
+  const nGlobal = (typeof DEMO_POOL !== 'undefined') ? DEMO_POOL.length : 300;
+
+  // Pick the top twin's most DISTINCTIVE crop
+  let twinDistinctiveCrop = null;
+  if (top && top.crops && top.crops.length) {
+    twinDistinctiveCrop = [...top.crops]
+      .sort((a, b) => (globalCounts[a] || 999) - (globalCounts[b] || 999))[0];
+  }
+
+  // Collect all crops across twins (used by several findings)
+  const allTwinCrops = new Set();
+  (allTwins || []).forEach(tt => (tt.crops || []).forEach(c => allTwinCrops.add(c)));
+
+  // ═════════════════════════════════════════════════════════════
+  // 01 — The climate fingerprint
+  // ═════════════════════════════════════════════════════════════
+  const climateRarity = estimateClimateRarity(t, p);
+  findings.push({
+    text: `Your field reads as <strong>${t.toFixed(1)}°C mean temperature</strong> and <strong>${Math.round(p)}mm of annual rainfall</strong>, a ${tempBand}, ${precipBand} climate. Roughly <strong>${climateRarity}%</strong> of the world's cultivated land sits in this band.`,
+  });
+
+  // ═════════════════════════════════════════════════════════════
+  // 02 — The twin
+  // ═════════════════════════════════════════════════════════════
+  if (top && top.similarity > 0.75 && top.identity) {
+    findings.push({
+      text: `Your closest climate twin is <strong>${topName}</strong>, ${topDist}km away, ${top.identity}. Your land has the climate bones of a place the world already recognises.`,
+    });
+  } else {
+    findings.push({
+      text: `Your field's climate fingerprint is <strong>unusually distinctive</strong>. No single region in our reference pool matches it closely, which means your land sits in a rare ecological pocket few fields share.`,
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 03 — What your twin is known for
+  // ═════════════════════════════════════════════════════════════
+  if (twinDistinctiveCrop && topName) {
+    findings.push({
+      text: `${topName} is known for <strong>${twinDistinctiveCrop}</strong>. Your coordinate carries the same climate conditions that make that crop possible there.`,
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 04 — Hemisphere flip (if applicable) OR latitude framing (fallback)
+  // ═════════════════════════════════════════════════════════════
+  if (top && coords.lat && Math.sign(coords.lat) !== Math.sign(top.lat)) {
+    findings.push({
+      text: `Your twin sits in the <strong>opposite hemisphere</strong>. When your fields are dormant, theirs are in full growth. When you harvest, they're pruning. Same climate, six months out of phase.`,
+    });
+  } else if (top) {
+    const userLatAbs = Math.abs(coords.lat).toFixed(1);
+    const twinLatAbs = Math.abs(top.lat).toFixed(1);
+    findings.push({
+      text: `You sit at <strong>${userLatAbs}°</strong> latitude, your twin at <strong>${twinLatAbs}°</strong>. Fields in the same latitude band share the same angle of sunlight through the year, which is why your climate rhythms align.`,
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 05 — Distance framing: far-side, cross-continental, or regional
+  // ═════════════════════════════════════════════════════════════
+  if (top && top.distKm > 12000) {
+    findings.push({
+      text: `${topName} is <strong>${topDist}km away</strong>, nearly on the other side of the planet. Different ocean, different history, different language. Your land and theirs are climate relatives.`,
+    });
+  } else if (top && top.distKm > 5000) {
+    findings.push({
+      text: `${topName} lies <strong>${topDist}km</strong> from your field, an ocean and a continent between you, yet the climates align. That's not proximity. That's pattern.`,
+    });
+  } else if (top && top.distKm > 500) {
+    findings.push({
+      text: `Your closest twin sits only <strong>${topDist}km</strong> away. Close enough to visit, far enough that you might never have thought of it as a comparison.`,
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 06 — The club of three (always surfaces when 3 twins exist)
+  // ═════════════════════════════════════════════════════════════
+  if (allTwins && allTwins.length >= 3) {
+    const othersNames = allTwins.slice(1, 3).map(x => x.name.split(',')[0]);
+    const hemis = new Set(allTwins.slice(0, 3).map(x => x.lat >= 0 ? 'N' : 'S'));
+    const spanText = hemis.size === 2 ? 'spanning both hemispheres' : 'across different regions';
+    findings.push({
+      text: `Three places share your climate rhythm: <strong>${topName}, ${othersNames.join(', ')}</strong>, ${spanText}. Same conditions, worlds apart.`,
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 07 — A second distinctive crop (excludes the one named in F03)
+  // ═════════════════════════════════════════════════════════════
+  if (allTwins && allTwins.length >= 2) {
+    const nTwins = allTwins.length;
+    const localCounts = {};
+    allTwins.forEach(tt => (tt.crops || []).forEach(c => {
+      localCounts[c] = (localCounts[c] || 0) + 1;
+    }));
+    const excluded = new Set([twinDistinctiveCrop].filter(Boolean));
+    const scored = Object.entries(localCounts)
+      .filter(([c, n]) => !excluded.has(c) && n >= Math.ceil(nTwins / 2))
+      .map(([c, localN]) => {
+        const globalShare = (globalCounts[c] || 1) / nGlobal;
+        const localShare = localN / nTwins;
+        return { crop: c, localN, distinctiveness: localShare / Math.max(globalShare, 0.05) };
+      })
+      .sort((a, b) => b.distinctiveness - a.distinctiveness);
+
+    if (scored.length > 0) {
+      const pick = scored[0];
+      if (pick.localN === nTwins && pick.distinctiveness > 2.0) {
+        findings.push({
+          text: `Another crop threads through <strong>every</strong> matching region: <strong>${pick.crop}</strong>. In climates like yours, ${pick.crop} and ${twinDistinctiveCrop || 'its companion crop'} travel together.`,
+        });
+      } else if (pick.distinctiveness > 2.0) {
+        findings.push({
+          text: `A crop strongly tied to your climate class is <strong>${pick.crop}</strong>, uncommon worldwide, but present in the regions that match your fingerprint.`,
+        });
+      } else {
+        findings.push({
+          text: `Matching regions also grow <strong>${pick.crop}</strong>, suggesting your climate rewards it as well.`,
+        });
+      }
+    } else if (twinDistinctiveCrop) {
+      // No second distinctive crop — surface a different angle instead
+      findings.push({
+        text: `Matching regions are built almost entirely around <strong>${twinDistinctiveCrop}</strong>. Your climate class is a mono-crop signature, focused, not diversified.`,
+      });
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 08 — Crop range (always surfaces when twins exist)
+  // ═════════════════════════════════════════════════════════════
+  if (allTwinCrops.size > 0) {
+    const n = allTwinCrops.size;
+    if (n >= 8) {
+      findings.push({
+        text: `Across regions that match your climate, at least <strong>${n} distinct crops</strong> are grown commercially. Your climate band has unusual agricultural range.`,
+      });
+    } else if (n >= 4) {
+      findings.push({
+        text: `Regions matching your climate grow <strong>${n} different crops</strong> commercially, enough variety to diversify, focused enough to specialise.`,
+      });
+    } else {
+      findings.push({
+        text: `Regions matching your climate grow a <strong>narrow set of ${n} crops</strong>. It's a band that rewards specialists.`,
+      });
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 09 — Climate class framing (always surfaces if we have a twin)
+  // ═════════════════════════════════════════════════════════════
+  if (top && top.climate) {
+    findings.push({
+      text: `Climatologists call this pattern <strong>${top.climate}</strong>. It's one of the climate types most associated with specialty agriculture, coffee, wine, olive, citrus, stone fruit, and more all trace back to bands like this.`,
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // 10 — Closing: the core ORTH promise (always surfaces)
+  // ═════════════════════════════════════════════════════════════
+  findings.push({
+    text: `This is what ORTH sees when you drop a pin. Climate, soil, history, crops, risk, stitched into a living portrait of your field. Mark your plot and talk to ORTH to see the rest.`,
+  });
+
+  return findings;
+}
+
+// Rough estimate of how common a temp/precip combination is among cultivated land
+// Based on global agricultural land distribution — illustrative, not precise
+function estimateClimateRarity(t, p) {
+  // Common zones get lower rarity numbers (meaning they represent a large share)
+  // Extreme zones get higher rarity (meaning they're unusual)
+  if (t >= 18 && t <= 26 && p >= 800 && p <= 2000) return 22; // tropical/subtropical moderate
+  if (t >= 10 && t <= 18 && p >= 600 && p <= 1200) return 18; // temperate moderate (big cereal/row crop zone)
+  if (t >= 14 && t <= 20 && p >= 400 && p <= 700) return 8;   // Mediterranean
+  if (t >= 5 && t <= 12 && p >= 500 && p <= 1000) return 15;  // cool temperate
+  if (t >= 22 && p < 400) return 4;   // hot and dry
+  if (t < 5) return 2;                 // cold
+  if (p > 2000) return 3;              // very wet tropical
+  return 6; // anything else uncommon
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN FLOW
+═══════════════════════════════════════════════════════════ */
+
+let currentResult = null;
+
+async function runParallel() {
+  if (!currentCoords) return;
+
+  // User is committing to a fresh run — drop any preserved "came from results" state
+  window.__cameFromResults = false;
+  window.__previousResult = null;
+
+  // Bring sphere + landscape back into view behind the transparent search overlay
+  if (heroSphere) heroSphere.userData.shouldBeVisible = true;
+  if (heroLandscape) heroLandscape.visible = true;
+  // Hide the map card itself during search
+  document.getElementById('hero-map').classList.remove('visible');
+  document.body.classList.remove('map-stage-active');
+
+  showSearchOverlay();
+
+  // Staged animation
+  setSearchStage("Step 01 · Reading", "Reading your field's <em>signature.</em>", 15);
+  await sleep(1400);
+
+  setSearchStage("Step 02 · Climate", "Pulling 30 years of <em>climate data.</em>", 35);
+  const climate = await fetchQuickClimate(currentCoords.lat, currentCoords.lng);
+
+  // Check if we got a real climate object or an error
+  if (!climate || climate.__error) {
+    hideSearchOverlay();
+    showErrorView(climate?.__error || 'unknown');
+    return;
+  }
+
+  setSearchStage("Step 03 · Scanning", "Comparing your field to <em>fields across the world.</em>", 60);
+  await sleep(1600);
+
+  setSearchStage("Step 04 · Matching", "Finding your closest <em>climate twin.</em>", 85);
+  const twins = findTwins(climate, currentCoords);
+  await sleep(1400);
+
+  setSearchStage("Complete", "Your field's twin has been <em>found.</em>", 100);
+  await sleep(900);
+
+  // Build the result
+  const findings = buildFindings(climate, twins[0], currentCoords, twins);
+  currentResult = { coords: currentCoords, climate, twins, findings };
+  renderResult();
+
+  // Transition: close the search overlay, reveal the striking result ON the sphere
+  hideSearchOverlay();
+
+  // Ensure sphere + landscape remain visible for the result reveal
+  if (heroSphere) heroSphere.userData.shouldBeVisible = true;
+  if (heroLandscape) heroLandscape.visible = true;
+
+  // Show the hero-result stage (floats on the sphere)
+  showHeroResult();
+
+  // Also mark the detailed result-view as visible below (user scrolls there)
+  document.getElementById('result-view').classList.add('visible');
+}
+
+function showHeroResult() {
+  if (!currentResult) return;
+  const top = currentResult.twins[0];
+  const titleEl = document.getElementById('hero-result-title');
+  const subEl = document.getElementById('hero-result-sub');
+  const kickerEl = document.getElementById('hero-result-kicker');
+
+  if (top && top.similarity > 0.75) {
+    kickerEl.textContent = 'Your field twin';
+    titleEl.innerHTML = `A mirror of your land sits in <em>${top.name.split(',')[0]}.</em>`;
+    subEl.textContent = `Same climate fingerprint. Different hemisphere. ${Math.round(top.distKm).toLocaleString()} kilometres away.`;
+  } else {
+    kickerEl.textContent = 'Your field';
+    titleEl.innerHTML = `Your field is <em>one of a kind.</em>`;
+    subEl.textContent = `No single region on earth closely mirrors your climate fingerprint. Your land has a signature of its own.`;
+  }
+
+  document.getElementById('hero-result').classList.add('visible');
+}
+
+function scrollToDetails(e) {
+  if (e) e.preventDefault();
+  document.getElementById('result-view').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderResult() {
+  if (!currentResult) return;
+  const { twins, findings } = currentResult;
+  const top = twins[0];
+
+  if (top && top.similarity > 0.75) {
+    document.getElementById('result-title').innerHTML = `Your field's twin is <em>${top.name.split(',')[0]}.</em>`;
+    document.getElementById('result-sub').textContent = `Here's the field on earth whose climate fingerprint most closely matches yours, and two runners-up worth knowing.`;
+  } else {
+    document.getElementById('result-title').innerHTML = `Your field is <em>one of a kind.</em>`;
+    document.getElementById('result-sub').textContent = `No region in our reference pool closely matches your climate fingerprint. Here's what earth offers as the nearest parallels.`;
+  }
+
+  // Primary twin
+  if (top) {
+    document.getElementById('twin-name').textContent = top.name.split(',')[0];
+    document.getElementById('twin-region').textContent = top.region;
+    document.getElementById('twin-score').textContent = `${Math.round(top.similarity * 100)}%`;
+    document.getElementById('twin-notes').innerHTML = `Known as a <strong>${top.climate}</strong> region. Approximately ${Math.round(top.distKm).toLocaleString()}km from your field.`;
+  }
+
+  // Alt twins
+  const altsEl = document.getElementById('twin-alts');
+  altsEl.innerHTML = '';
+  [twins[1], twins[2]].forEach((t, i) => {
+    if (!t) return;
+    altsEl.innerHTML += `
+      <div class="twin-alt">
+        <div class="twin-alt-label">Also close · #${i + 2}</div>
+        <div class="twin-alt-name">${t.name.split(',')[0]}</div>
+        <div class="twin-alt-region">${t.region}</div>
+        <div class="twin-alt-score">${Math.round(t.similarity * 100)}% similarity · ${Math.round(t.distKm).toLocaleString()}km</div>
+      </div>
+    `;
+  });
+
+  // Findings
+  const fEl = document.getElementById('findings-list');
+  fEl.innerHTML = '';
+  findings.forEach((f, i) => {
+    fEl.innerHTML += `
+      <div class="finding">
+        <div class="finding-num">0${i + 1}</div>
+        <div class="finding-text">${f.text}</div>
+      </div>
+    `;
+  });
+}
+
+function runAgain() {
+  // Mark that this map session originated from the results view,
+  // and preserve the result so Back can restore it.
+  window.__cameFromResults = true;
+  window.__previousResult = currentResult;
+  document.getElementById('result-view').classList.remove('visible');
+  document.getElementById('hero-result').classList.remove('visible');
+  currentResult = null;
+  if (currentMarker) {
+    leafletMap.removeLayer(currentMarker);
+    currentMarker = null;
+  }
+  currentCoords = null;
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('map-overlay').innerHTML = `
+    <div class="map-overlay-title">Awaiting pin</div>
+    <div class="map-overlay-text">Type a location or click anywhere on the map.</div>
+  `;
+  // Show map stage, apply the solid-black map-stage background
+  document.getElementById('hero-map').classList.add('visible');
+  document.body.classList.add('map-stage-active');
+  if (heroSphere) heroSphere.userData.shouldBeVisible = false;
+  document.getElementById('top').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => {
+    if (leafletMap) leafletMap.invalidateSize();
+  }, 400);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ═══════════════════════════════════════════════════════════
+   ERROR VIEW HANDLING
+═══════════════════════════════════════════════════════════ */
+
+function showErrorView(errorType) {
+  const titleEl = document.getElementById('error-title');
+  const subEl = document.getElementById('error-sub');
+
+  const messages = {
+    rate_limit: {
+      title: "Both climate services are busy.",
+      sub: 'Parallel pulls from Open-Meteo and NASA POWER, both are temporarily rate-limiting requests. Wait a minute and try again.',
+    },
+    fetch_failed: {
+      title: "Couldn't reach the climate service.",
+      sub: 'The data provider responded with an error. This is usually temporary, please try again in a moment.',
+    },
+    bad_data: {
+      title: 'Climate data came back incomplete.',
+      sub: 'The coordinate you chose returned no usable climate records. Try marking a different field on the map.',
+    },
+    no_data: {
+      title: 'No data for this location.',
+      sub: 'The coordinate has no climate record in the archive. Try a location on land with established agriculture.',
+    },
+    network: {
+      title: 'Network problem.',
+      sub: "Check your connection and try again.",
+    },
+  };
+
+  const m = messages[errorType] || {
+    title: "Something went wrong.",
+    sub: 'Please try again or return to the start.',
+  };
+
+  titleEl.textContent = m.title;
+  subEl.textContent = m.sub;
+
+  document.getElementById('error-view').classList.add('visible');
+}
+
+function dismissError() {
+  document.getElementById('error-view').classList.remove('visible');
+  goHome();
+}
+
+function retryRun() {
+  document.getElementById('error-view').classList.remove('visible');
+  // Re-run with current pin
+  if (currentCoords) runParallel();
+}
+
+// Reset back to the very first landing state
+function goHome(event) {
+  if (event) event.preventDefault();
+
+  // Show home page in case docs are currently visible
+  document.getElementById('page-docs')?.classList.add('hidden');
+  document.getElementById('page-home')?.classList.remove('hidden');
+
+  // Hide every view that might be open
+  document.getElementById('error-view')?.classList.remove('visible');
+  document.getElementById('result-view')?.classList.remove('visible');
+  document.getElementById('search-overlay')?.classList.remove('visible');
+  document.getElementById('canvas-modal')?.classList.remove('visible');
+  document.getElementById('hero-map')?.classList.remove('visible');
+  document.getElementById('hero-result')?.classList.remove('visible');
+  document.getElementById('hero-content')?.classList.remove('hidden');
+  document.body.classList.remove('map-stage-active');
+
+  // Bring the sphere + landscape back
+  if (heroSphere) heroSphere.userData.shouldBeVisible = true;
+  if (heroLandscape) heroLandscape.visible = true;
+
+  // Clear map state
+  if (currentMarker && leafletMap) {
+    leafletMap.removeLayer(currentMarker);
+    currentMarker = null;
+  }
+  currentCoords = null;
+  currentResult = null;
+  window.__cameFromResults = false;
+  window.__previousResult = null;
+  const runBtn = document.getElementById('run-btn');
+  if (runBtn) runBtn.disabled = true;
+  const mapOverlay = document.getElementById('map-overlay');
+  if (mapOverlay) {
+    mapOverlay.innerHTML = `
+      <div class="map-overlay-title">Awaiting pin</div>
+      <div class="map-overlay-text">Type a location or click anywhere on the map.</div>
+    `;
+  }
+  const searchInput = document.getElementById('map-search-input');
+  if (searchInput) searchInput.value = '';
+  const searchResults = document.getElementById('map-search-results');
+  if (searchResults) { searchResults.innerHTML = ''; searchResults.classList.remove('visible'); }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SHARE CANVAS, PNG generation
+═══════════════════════════════════════════════════════════ */
+
+function openShareCanvas() {
+  renderShareCanvas();
+  document.getElementById('canvas-modal').classList.add('visible');
+}
+
+function closeShareCanvas() {
+  document.getElementById('canvas-modal').classList.remove('visible');
+}
+
+// Preload landscape header image once and cache it for the share card
+let shareHeaderImg = null;
+let shareLogoImg = null;
+
+function preloadShareHeader() {
+  if (shareHeaderImg) return shareHeaderImg;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = LANDSCAPE_URL;
+  shareHeaderImg = img;
+  return img;
+}
+
+function preloadShareLogo() {
+  if (shareLogoImg) return shareLogoImg;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = "https://raw.githubusercontent.com/ayditechnologies/orth/ORTH-Logo/ORTH%20Logo-SageonLight.svg";
+  shareLogoImg = img;
+  return img;
+}
+
+function renderShareCanvas() {
+  const canvas = document.getElementById('share-canvas-preview');
+  const ctx = canvas.getContext('2d');
+  const W = 1200, H = 1600;
+  canvas.width = W; canvas.height = H;
+
+  if (!currentResult) return;
+  const { twins, coords, climate } = currentResult;
+  const top = twins[0];
+  const isOneOfKind = !top || top.similarity < 0.75;
+
+  // Base
+  ctx.fillStyle = '#0a0d0a';
+  ctx.fillRect(0, 0, W, H);
+
+  // ═════════════════════════════════════════
+  // LAYOUT ANCHORS (tuned in share card sandbox)
+  // ═════════════════════════════════════════
+  const headerH = 560;            // image block
+  const wordmarkY = 455;          // sits ON the image, near its bottom edge
+  const subtitleY = 520;          // FIELD TWIN
+  const headlineStartY = 685;     // big headline first line
+  const statsLabelY = 965;        // stat labels
+  const statsValueY = 1105;       // stat values (99%)
+  const dividerY = 1230;          // horizontal line
+  const footerTextY = 1300;       // tagline first line
+  const iconCY = H - 150;         // app icon, its own row
+
+  const img = preloadShareHeader();
+  const logoImg = preloadShareLogo();
+
+  const drawHeader = () => {
+    if (img.complete && img.naturalWidth > 0) {
+      // Push the image DOWN — sample from higher up so the top edge is visible
+      // Using 0.28 instead of 0.45 means we crop from nearer the top of the panorama
+      const srcW = img.naturalWidth;
+      const srcH = img.naturalHeight;
+      const bandRatio = W / headerH;
+      const cropH = srcW / bandRatio;
+      const cropY = Math.max(0, Math.min(srcH - cropH, srcH * 0.30 - cropH / 2));
+      ctx.drawImage(img, 0, cropY, srcW, cropH, -1, 0, W + 2, headerH);
+    } else {
+      const g = ctx.createLinearGradient(0, 0, 0, headerH);
+      g.addColorStop(0, '#2a3a2a');
+      g.addColorStop(1, '#0a0d0a');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, headerH);
+    }
+
+    // Gradient completes within the image — no hard edges, smooth image-to-black transition
+    // Start from ~30% down the image, fully opaque by image bottom
+    const fadeStart = headerH * 0.30;  // start fading at y=168
+    const fadeEnd = headerH;            // fully black by image bottom (y=560)
+    const fade = ctx.createLinearGradient(0, fadeStart, 0, fadeEnd);
+    fade.addColorStop(0,   'rgba(10,13,10,0)');
+    fade.addColorStop(0.3, 'rgba(10,13,10,0.3)');
+    fade.addColorStop(0.6, 'rgba(10,13,10,0.75)');
+    fade.addColorStop(0.85, 'rgba(10,13,10,0.95)');
+    fade.addColorStop(1,   'rgba(10,13,10,1)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, fadeStart, W, fadeEnd - fadeStart);
+
+    drawRest();
+  };
+
+  const drawRest = () => {
+    const PAD = 80;
+
+    // ─── Wordmark — sits on top of the image/fade ──────
+    ctx.textAlign = 'center';
+    ctx.font = '300 58px "Cocogoose", sans-serif';
+    const orthText = 'ORTH';
+    const parallelText = 'PARALLEL';
+    const gap = 24;
+    const orthW = ctx.measureText(orthText).width;
+    const parallelW = ctx.measureText(parallelText).width;
+    const totalW = orthW + gap + parallelW;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(orthText, W/2 - totalW/2, wordmarkY);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText(parallelText, W/2 - totalW/2 + orthW + gap, wordmarkY);
+
+    // ─── FIELD TWIN subtitle ─────────────────
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = '500 28px "Nunito Sans", sans-serif';
+    ctx.fillText('FIELD TWIN', W/2, subtitleY);
+
+    // ─── Big headline ────────────────────────
+    ctx.fillStyle = '#fff';
+    ctx.font = '300 100px "Cocogoose", sans-serif';
+    ctx.textAlign = 'center';
+
+    if (isOneOfKind) {
+      ctx.fillText('My field is', W/2, headlineStartY);
+      ctx.fillStyle = '#9ebb96';
+      ctx.font = 'italic 400 110px "Source Serif 4", serif';
+      ctx.fillText('one of a kind', W/2, headlineStartY + 118);
+    } else {
+      ctx.fillText('My field has a twin', W/2, headlineStartY);
+      const twinName = top.name.split(',')[0];
+      ctx.font = '300 100px "Cocogoose", sans-serif';
+      const inText = 'in ';
+      const inW = ctx.measureText(inText).width;
+      ctx.font = 'italic 400 110px "Source Serif 4", serif';
+      let nameW = ctx.measureText(twinName).width;
+      let combined = inW + nameW;
+      let nameSize = 110;
+      while (combined > W - PAD * 2 && nameSize > 58) {
+        nameSize -= 4;
+        ctx.font = `italic 400 ${nameSize}px "Source Serif 4", serif`;
+        nameW = ctx.measureText(twinName).width;
+        combined = inW + nameW;
+      }
+      ctx.textAlign = 'left';
+      const sx = W/2 - combined/2;
+      ctx.fillStyle = '#fff';
+      ctx.font = '300 100px "Cocogoose", sans-serif';
+      ctx.fillText(inText, sx, headlineStartY + 118);
+      ctx.fillStyle = '#9ebb96';
+      ctx.font = `italic 400 ${nameSize}px "Source Serif 4", serif`;
+      ctx.fillText(twinName, sx + inW, headlineStartY + 118);
+    }
+
+    // ─── Stats row ──────────────────────────
+    ctx.textAlign = 'center';
+
+    if (!isOneOfKind) {
+      const col1X = W * 0.18;
+      const col2X = W / 2;
+      const col3X = W * 0.82;
+
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '600 22px "Nunito Sans", sans-serif';
+      ctx.fillText('DISTANCE', col1X, statsLabelY);
+      ctx.fillText('SIMILARITY', col2X, statsLabelY - 16);
+      ctx.fillText('SCORE', col2X, statsLabelY + 14);
+      ctx.fillText('REGION', col3X, statsLabelY);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '300 100px "Cocogoose", sans-serif';
+      ctx.fillText(`${Math.round(top.similarity * 100)}%`, col2X, statsValueY);
+      ctx.font = '300 36px "Cocogoose", sans-serif';
+      const sideValueY = statsValueY - 28;
+      ctx.fillText(`${Math.round(top.distKm).toLocaleString()}KM`, col1X, sideValueY);
+      let regionStr = top.region.split(',')[0].toUpperCase();
+      if (regionStr.length > 14) regionStr = regionStr.slice(0, 13) + '…';
+      ctx.fillText(regionStr, col3X, sideValueY);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '600 22px "Nunito Sans", sans-serif';
+      ctx.fillText('CLIMATE FINGERPRINT', W/2, statsLabelY);
+      ctx.fillStyle = '#fff';
+      ctx.font = '300 64px "Cocogoose", sans-serif';
+      ctx.fillText(`${climate.t_ann.toFixed(1)}°C · ${Math.round(climate.precip_ann)}MM`, W/2, statsValueY);
+    }
+
+    // ─── Divider ────────────────────────────
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PAD, dividerY);
+    ctx.lineTo(W - PAD, dividerY);
+    ctx.stroke();
+
+    // ─── Footer text — bigger URL ───────────
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '400 20px "Nunito Sans", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Every field on earth has a climate fingerprint.', PAD, footerTextY);
+    ctx.fillText('Parallel finds the field that matches yours.', PAD, footerTextY + 28);
+
+    // URL — bigger, more prominent
+    ctx.fillStyle = '#9ebb96';
+    ctx.font = '500 36px "Nunito Sans", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('askorth.com/parallel', W - PAD, footerTextY + 14);
+
+    // ─── App icon — own row at bottom, aggressive corner radius ──
+    const iconSize = 160;
+    const iconCX = W / 2;
+
+    ctx.fillStyle = '#fff';
+    roundRect(ctx, iconCX - iconSize/2, iconCY - iconSize/2, iconSize, iconSize, 60);
+    ctx.fill();
+
+    if (logoImg.complete && logoImg.naturalWidth > 0) {
+      const logoInner = iconSize * 0.8;
+      ctx.drawImage(
+        logoImg,
+        iconCX - logoInner/2,
+        iconCY - logoInner/2,
+        logoInner,
+        logoInner
+      );
+    } else {
+      const ringR = iconSize * 0.4;
+      ctx.strokeStyle = '#9ebb96';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#9ebb96';
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, iconSize * 0.06, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  if (img.complete && img.naturalWidth > 0) {
+    drawHeader();
+  } else {
+    img.onload = drawHeader;
+    drawHeader();
+  }
+  if (!logoImg.complete) {
+    logoImg.onload = () => {
+      if (img.complete && img.naturalWidth > 0) drawHeader();
+    };
+  }
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && i > 0) {
+      ctx.fillText(line.trim(), x, currentY);
+      line = words[i] + ' ';
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line.trim(), x, currentY);
+}
+
+function downloadShareCard() {
+  const canvas = document.getElementById('share-canvas-preview');
+  const link = document.createElement('a');
+  link.download = `ORTH-Parallel-Field-Twin-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAV BEHAVIOR + INIT
+═══════════════════════════════════════════════════════════ */
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  if (window.scrollY > 40) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+window.addEventListener('load', () => {
+  initHeroSphere();
+  initMap();
+});
+</script>
+
+</div>
+
+<div id="page-docs" class="page hidden">
+<!-- ═══════════════════════════════════════════ DOC HERO -->
+<section class="doc-page-hero">
+  <div class="doc-page-hero-inner">
+    <h1 class="doc-page-title">Behind <em>ORTH Parallel.</em></h1>
+    <p class="doc-page-sub">The what, the how, the honest limits, and what this becomes if we build it seriously.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ DOCUMENTATION -->
+<section class="docs-section" id="docs">
+  <div class="docs-intro">
+    <h2 class="docs-hero-title">A brand experience<br>disguised as <em>an engine.</em></h2>
+    <p class="docs-hero-sub">ORTH Parallel takes a coordinate and returns ten findings about a grower's land that sound like no other tool has ever spoken to them. No configuration. No call to action. Just signal, and a link to share it.</p>
+  </div>
+</section>
+
+<section class="docs-preamble">
+  <p>Most brands earn attention by saying what they are.</p>
+  <p><span class="dim">ORTH Parallel earns it by showing what it sees.</span> A grower drops a pin and watches the tool describe their own field back to them with specificity they've never heard. The engine does the speaking. The brand stays in the background.</p>
+  <p>This document frames Parallel as what it <em>publicly</em> is: a brand experience. A way to be remembered.</p>
+</section>
+
+<section class="doc" id="doc-what">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">A brand experience, <em>disguised as a tool.</em></h2>
+    <p class="doc-section-intro">Parallel is ORTH's front door. It lets growers, agronomists, and industry peers encounter the brand through a moment of genuine insight about their own land before any sales conversation begins.</p>
+
+    <div class="doc-blocks">
+      <div class="doc-block">
+        <div class="doc-block-num">A</div>
+        <div>
+          <div class="doc-block-title">The objective</div>
+          <div class="doc-block-body">
+            <p>Engagement, relatable value, and a hook that holds attention longer than an ad ever could. Parallel is designed to make a grower say <em>how did it know that?</em> within thirty seconds, and to make them want to show someone.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">B</div>
+        <div>
+          <div class="doc-block-title">The shape</div>
+          <div class="doc-block-body">
+            <p>One coordinate in. Ten findings out. One shareable card. The grower sees their field's climate twin, two runner-up matches, and a set of specific observations about their land. No advice, no recommendations, no CTAs embedded in the output.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">C</div>
+        <div>
+          <div class="doc-block-title">The posture</div>
+          <div class="doc-block-body">
+            <p>ORTH gives something before asking for anything. The grower leaves with a portrait of their field they've never seen. They can share it, keep it, or forget it. There is no funnel. Trust is the only conversion metric.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="doc" id="doc-engine">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">An engine with <em>nothing hidden,</em> just condensed.</h2>
+    <p class="doc-section-intro">The experience surfaces ten findings. Behind them sits an engine that runs roughly a hundred-and-eighty validation points on every coordinate. Parallel shows the grower the top of the iceberg. The iceberg is real.</p>
+
+    <div class="doc-blocks">
+      <div class="doc-block">
+        <div class="doc-block-num">01</div>
+        <div>
+          <div class="doc-block-title">Seven-dimensional climate reading</div>
+          <div class="doc-block-body">
+            <p>Every coordinate is mapped across seven axes: annual temperature, coldest-month, hottest-month, diurnal swing, annual precipitation, winter-rainfall concentration, and elevation. This is the fingerprint. Two fields with the same fingerprint are climate twins, even if they sit on different continents.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">02</div>
+        <div>
+          <div class="doc-block-title">A three-hundred-region reference pool</div>
+          <div class="doc-block-body">
+            <p>Parallel matches every submitted coordinate against three hundred curated agricultural regions spanning seventy-nine countries, from the Andalusian olive belt to the Ethiopian coffee highlands, from Okanagan orchards to Mekong rice. A minimum distance rule prevents the tool from returning a grower's neighbour as their twin.</p>
+            <ul class="lean">
+              <li><span class="k">Mediterranean</span><span class="v">Spain · Italy · Greece · Morocco · Lebanon</span></li>
+              <li><span class="k">Southern Hemisphere</span><span class="v">Chile · South Africa · Australia · NZ</span></li>
+              <li><span class="k">Tropical Highland</span><span class="v">Colombia · Rwanda · Yunnan · Dalat</span></li>
+              <li><span class="k">Desert Agriculture</span><span class="v">Rafsanjan · Al Ahsa · Xinjiang</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">03</div>
+        <div>
+          <div class="doc-block-title">Open public data, with fallbacks</div>
+          <div class="doc-block-body">
+            <p>Every coordinate queries ERA5 climate reanalysis through Open-Meteo as the primary source, with NASA POWER as an automatic fallback when the primary is rate-limited or unavailable. Soil properties come from SoilGrids ISRIC. Elevation from SRTM. The stack is deliberately public and reproducible.</p>
+            <ul class="lean">
+              <li><span class="k">Climate primary</span><span class="v">Open-Meteo · ERA5 reanalysis</span></li>
+              <li><span class="k">Climate fallback</span><span class="v">NASA POWER · climatology</span></li>
+              <li><span class="k">Soil</span><span class="v">SoilGrids ISRIC · nine properties</span></li>
+              <li><span class="k">Elevation</span><span class="v">SRTM · thirty-metre</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">04</div>
+        <div>
+          <div class="doc-block-title">Scoring that earns the word <em>twin</em></div>
+          <div class="doc-block-body">
+            <p>Similarity is a weighted distance across the seven dimensions, with a Köppen-Geiger climate-class bonus when both fields share the same classification. A match below seventy-five percent similarity isn't called a twin. Parallel would rather say <em>there's nothing quite like your field</em> than overreach.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">05</div>
+        <div>
+          <div class="doc-block-title">Cached and sourced</div>
+          <div class="doc-block-body">
+            <p>Each coordinate's reading is cached locally so repeat queries are instant. Every finding carries its own source attribution inline. If a data layer is unavailable for a given coordinate, Parallel says so instead of guessing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="doc" id="doc-sees">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">The ten findings are <em>a thin slice</em> of what's possible.</h2>
+    <p class="doc-section-intro">Parallel ships with ten findings per field, chosen for emotional and informational density. The engine itself can see more. This section describes the possibility space that opens when paid data layers come online.</p>
+
+    <div class="pull">With richer inputs, a single coordinate could produce dozens of distinct observations spanning climate, soil, risk, and peers across the planet.</div>
+
+    <div class="cat-grid">
+      <div class="cat">
+        <div class="cat-title">Climate signature</div>
+        <div class="cat-desc">Temperature range, precipitation rhythm, humidity, fog regime, winter intensity, summer peak.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Water balance</div>
+        <div class="cat-desc">Evaporative demand, dry-streak length, peak irrigation month, annual water deficit.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Soil fabric</div>
+        <div class="cat-desc">Texture class, drainage behaviour, pH band, cation exchange, coarse-fragment share, rooting-zone water capacity.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Topography and aspect</div>
+        <div class="cat-desc">Elevation, slope percent, compass aspect, local relief, frost-pocket risk, sun exposure bias.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Twin relationships</div>
+        <div class="cat-desc">Closest regional peers worldwide, with similarity scores and live conditions from each twin's location today.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Change over time</div>
+        <div class="cat-desc">Thirty-year warming trend, precipitation shift, seasonal anomaly versus baseline, frost-free window expansion.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Vegetation and productivity</div>
+        <div class="cat-desc">NDVI trajectory, seasonality class, evergreen versus pulsed vegetation cycles.</div>
+      </div>
+      <div class="cat">
+        <div class="cat-title">Severe-weather exposure</div>
+        <div class="cat-desc">Thunderstorm climatology, hail frequency, flood and heat-wave return periods, wind-damage axis.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="doc" id="doc-limits">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">Honest limits, <em>stated upfront.</em></h2>
+    <p class="doc-section-intro">Parallel runs on publicly available climate and soil data. That choice is deliberate for the brand experience, and worth naming clearly so nobody mistakes the demo for the product.</p>
+
+    <div class="doc-blocks">
+      <div class="doc-block">
+        <div class="doc-block-num">01</div>
+        <div>
+          <div class="doc-block-title">Public data has a ceiling</div>
+          <div class="doc-block-body">
+            <p>ERA5 reanalysis and SoilGrids give global coverage at useful resolution, but they aren't field-scale. A twenty-five kilometre climate cell is a rough neighbourhood, not a vineyard row. Every finding in Parallel is accurate <em>at the scale the data resolves</em>, and no finer.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">02</div>
+        <div>
+          <div class="doc-block-title">What a paid engine would add</div>
+          <div class="doc-block-body">
+            <p>Sentinel-2 imagery at ten metre resolution, hyperlocal forecast models, proprietary soil surveys, regional agricultural bulletins in four languages, disease-pressure networks like CABI and EPPO. These are the layers that turn a portrait into field-specific decision intelligence. None of them are in the brand experience by design.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">03</div>
+        <div>
+          <div class="doc-block-title">What a million-user rollout would cost</div>
+          <div class="doc-block-body">
+            <p>Running Parallel globally at scale is an infrastructure conversation, not a brand one. Caching, coordinate quantisation, backend proxying, and a paid tier of the primary weather provider would move the unit economics to roughly thirty euros a month for the first ten-thousand users. Tractable at that scale, and worth budgeting for before the numbers grow.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">04</div>
+        <div>
+          <div class="doc-block-title">What Parallel will never do</div>
+          <div class="doc-block-body">
+            <p>No recommendations. No spray decisions. No yield estimates. No crop-specific guidance beyond what the grower could read in any climate atlas. The brand experience stops exactly where the real product begins, on purpose.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="doc" id="doc-place">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">Two surfaces, <em>one voice.</em></h2>
+    <p class="doc-section-intro">Parallel lives where attention is short and curiosity is highest: the open website and the first minute of product onboarding.</p>
+
+    <div class="doc-blocks">
+      <div class="doc-block">
+        <div class="doc-block-num">01</div>
+        <div>
+          <div class="doc-block-title">The public website</div>
+          <div class="doc-block-body">
+            <p>Parallel is the marquee experience on <strong>askorth.com</strong>, a standalone route from the main navigation. Anyone can run it without an account. The shareable card generated at the end is indexable, public, and carries ORTH's mark.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">02</div>
+        <div>
+          <div class="doc-block-title">Product onboarding</div>
+          <div class="doc-block-body">
+            <p>Inside the app, Parallel becomes the first screen after sign-up. Before the grower marks a plot, configures a crop, or answers any question, ORTH hands them their field portrait. The product proves itself before it asks for anything.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">03</div>
+        <div>
+          <div class="doc-block-title">Campaign channels</div>
+          <div class="doc-block-body">
+            <p>Performance ads send traffic to Parallel, not to a sales page. Brand campaigns use individual Parallel readings as creative. Email invitations lead with a reader's own regional twin. Influencers in agronomy, viticulture, and speciality crops run the tool on camera and share the findings.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">04</div>
+        <div>
+          <div class="doc-block-title">What we measure</div>
+          <div class="doc-block-body">
+            <p>Runs per region, time spent on the output card, share rate, secondary traffic from shared cards, and the conversion path from Parallel experience to plot creation inside the product. Parallel is the top of the funnel, measured honestly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="doc" id="doc-beyond">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">The quiet question, <em>what if this becomes real?</em></h2>
+    <p class="doc-section-intro">This section is for the engineering side of the room. It acknowledges that Parallel, beneath the brand layer, is a genuinely novel piece of intelligence infrastructure.</p>
+
+    <div class="doc-blocks">
+      <div class="doc-block">
+        <div class="doc-block-num">01</div>
+        <div>
+          <div class="doc-block-title">Value in under thirty seconds</div>
+          <div class="doc-block-body">
+            <p>Parallel delivers a substantive reading of a field in less time than most agritech onboarding flows take to ask for a phone number. The engine can run at the front of the product experience permanently, as a genuine architectural advantage.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">02</div>
+        <div>
+          <div class="doc-block-title">The bridge from Parallel to ORTH</div>
+          <div class="doc-block-body">
+            <p>When a grower wants more than what Parallel shows, the natural next step is: mark your plot. The brand experience doesn't push toward this. A grower who sees their field portrait and wants deeper context will look for the door themselves.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">03</div>
+        <div>
+          <div class="doc-block-title">Parallel as a permanent capability</div>
+          <div class="doc-block-body">
+            <p>The engine can live inside the product too, as the first layer of context every time a grower opens a new plot. In that future, Parallel becomes a foundational tool. That's a decision for later, and a different document.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="doc" id="doc-roi">
+  <div class="doc-wrap">
+    <h2 class="doc-section-heading">The case for <em>building this seriously.</em></h2>
+    <p class="doc-section-intro">The test for Parallel is whether it makes ORTH unforgettable to the growers and agronomists who encounter it. Accuracy, craft, and design are the baseline, not the goal.</p>
+
+    <div class="pull">A brand experience that works at ten-thousand runs per month costs no more than a single performance-ad line. At a million runs per month, it reshapes how an industry hears about ORTH.</div>
+
+    <div class="doc-blocks">
+      <div class="doc-block">
+        <div class="doc-block-num">01</div>
+        <div>
+          <div class="doc-block-title">Earned attention</div>
+          <div class="doc-block-body">
+            <p>Parallel is engineered to be shared. Every run is a potential inbound: an agronomist posting their home region's portrait, a viticulturist sharing their vineyard's twin, a buyer running the tool on a sourcing region. The organic surface area is larger than any paid campaign can buy.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">02</div>
+        <div>
+          <div class="doc-block-title">Brand density</div>
+          <div class="doc-block-body">
+            <p>Every Parallel reading carries ORTH's name, typography, and voice. Users remember it as a moment when a tool told them something specific about their own land. That kind of recall is hard to buy.</p>
+          </div>
+        </div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-block-num">03</div>
+        <div>
+          <div class="doc-block-title">Credible entry to serious conversations</div>
+          <div class="doc-block-body">
+            <p>When ORTH enters a new market, a Chilean wine region, a Portuguese olive cooperative, a Mexican citrus district, Parallel is the first artefact that lands. By the time a real sales conversation happens, the brand is already familiar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="docs-footer">
+  <div class="foot-line">ORTH Parallel · Field Twin Experience · Internal Draft</div>
+</footer>
+</div>
+
+<script>
+
+/* ═══════════════════════════════════════════════════════════
+   VIRTUAL PAGE SWITCHING, home <-> docs (single file)
+═══════════════════════════════════════════════════════════ */
+function showDocs(e) {
+  if (e) e.preventDefault();
+  document.getElementById('page-home').classList.add('hidden');
+  document.getElementById('page-docs').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+function showHome(e) {
+  if (e) e.preventDefault();
+  document.getElementById('page-docs').classList.add('hidden');
+  document.getElementById('page-home').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+</script>
+</body>
+</html>
